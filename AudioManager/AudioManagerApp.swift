@@ -2,8 +2,6 @@
 //  AudioManagerApp.swift
 //  AudioManager
 //
-//  Created by fatih on 15.09.2026.
-//
 
 import SwiftUI
 
