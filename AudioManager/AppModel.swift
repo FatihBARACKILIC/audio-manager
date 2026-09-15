@@ -1,0 +1,454 @@
+import AudioCore
+import AudioDomain
+import AudioPersistence
+import Foundation
+import Observation
+
+/// The app's single source of truth: it owns persisted settings, the live app list and
+/// the audio engine, and keeps the three in agreement.
+///
+/// Everything here is main-actor isolated because it feeds SwiftUI directly. The
+/// expensive work it triggers is not: Core Audio lives behind `AudioEngineControlling`
+/// on its own queue, and persistence behind an actor.
+@Observable
+@MainActor
+final class AppModel {
+
+    // MARK: - Published state
+
+    private(set) var apps: [AudioApp] = []
+    private(set) var permission: AudioPermissionStatus = .notDetermined
+    private(set) var engineStatus: EngineStatus = .idle
+    private(set) var levels: [AppKey: Float] = [:]
+    /// Set when the stored settings could not be read, so the UI can say so once.
+    private(set) var loadWarning: String?
+
+    var appSettings: [AppKey: AppAudioSettings] = [:]
+    var profiles: [AudioProfile] = []
+    var activeProfileID: UUID?
+    var scheduleRules: [ScheduleRule] = []
+    var focus: FocusMode = .off
+    var outputLimit = OutputLimit()
+    var preferences = Preferences()
+
+    /// Apps muted right now because of a schedule rule.
+    private(set) var scheduleMutedApps: Set<AppKey> = []
+    private(set) var scheduleFocus: FocusMode?
+    private(set) var activeScheduleRuleNames: [String] = []
+
+    /// True while the panel is on screen. Metering only runs in that window.
+    var isPanelVisible = false {
+        didSet { panelVisibilityChanged() }
+    }
+
+    // MARK: - Collaborators
+
+    private let engine: any AudioEngineControlling
+    private let observer: AudioProcessObserver
+    private let store: SettingsStore
+    private let calendar: Calendar
+
+    /// Our own bundle identifier, so the panel never offers to mute Audio Manager.
+    private let ownBundleIdentifier: Set<String>
+
+    private var observationTask: Task<Void, Never>?
+    private var statusTask: Task<Void, Never>?
+    private var scheduleTask: Task<Void, Never>?
+    private var meterTask: Task<Void, Never>?
+    private var applyTask: Task<Void, Never>?
+    private var saveTask: Task<Void, Never>?
+
+    init(
+        engine: any AudioEngineControlling = TapEngine(),
+        observer: AudioProcessObserver = AudioProcessObserver(),
+        store: SettingsStore,
+        calendar: Calendar = .current
+    ) {
+        self.engine = engine
+        self.observer = observer
+        self.store = store
+        self.calendar = calendar
+        self.ownBundleIdentifier = Set([Bundle.main.bundleIdentifier].compactMap { $0 })
+    }
+
+    /// Convenience initialiser using the app's real Application Support directory.
+    static func makeDefault() -> AppModel {
+        let identifier = Bundle.main.bundleIdentifier ?? "com.barackilic.AudioManager"
+        let directory = (try? SettingsStore.defaultDirectory(bundleIdentifier: identifier))
+            ?? URL.applicationSupportDirectory.appendingPathComponent(identifier, isDirectory: true)
+        return AppModel(store: SettingsStore(directory: directory))
+    }
+
+    // MARK: - Lifecycle
+
+    func start() async {
+        await loadSettings()
+        permission = await engine.permissionStatus()
+
+        observer.start()
+        apps = AppGrouping.group(await observer.currentProcesses(), excluding: ownBundleIdentifier)
+
+        observationTask = Task { [weak self] in
+            guard let self else { return }
+            for await processes in observer.processUpdates {
+                await self.processesChanged(processes)
+            }
+        }
+
+        statusTask = Task { [weak self] in
+            guard let self else { return }
+            for await status in engine.statusUpdates {
+                await MainActor.run { self.engineStatus = status }
+            }
+        }
+
+        recomputeSchedule()
+        scheduleNextScheduleWakeUp()
+        applySoon()
+    }
+
+    func stop() async {
+        observationTask?.cancel()
+        statusTask?.cancel()
+        scheduleTask?.cancel()
+        meterTask?.cancel()
+        applyTask?.cancel()
+        saveTask?.cancel()
+        observer.stop()
+        await engine.shutdown()
+        await persist()
+    }
+
+    // MARK: - Permission
+
+    func requestPermission() async {
+        permission = await engine.requestPermission()
+        if permission == .granted {
+            applySoon()
+        }
+    }
+
+    // MARK: - Reading state
+
+    var policy: AudioPolicy {
+        AudioPolicy(
+            manual: appSettings,
+            defaults: .default,
+            activeProfile: activeProfile,
+            focus: focus,
+            limit: outputLimit,
+            scheduleMutedApps: scheduleMutedApps,
+            scheduleFocus: scheduleFocus
+        )
+    }
+
+    var activeProfile: AudioProfile? {
+        guard let activeProfileID else { return nil }
+        return profiles.first { $0.id == activeProfileID }
+    }
+
+    func settings(for key: AppKey) -> AppAudioSettings {
+        appSettings[key] ?? activeProfile?.settings(for: key) ?? .default
+    }
+
+    func state(for key: AppKey) -> EffectiveAppState {
+        policy.state(for: key)
+    }
+
+    /// True when at least one app is muted or processed right now.
+    var isControllingAnything: Bool {
+        !policy.activeStates(for: apps).isEmpty
+    }
+
+    // MARK: - Editing
+
+    func setVolume(_ volume: Double, for key: AppKey) {
+        var settings = settings(for: key)
+        settings.setVolume(volume)
+        // Touching the volume implies wanting it to take effect, which needs the
+        // rendering path; staying in mute-only would silently do nothing.
+        if volume < 1, settings.mode == .muteOnly {
+            settings.mode = .fullControl
+        }
+        update(settings, for: key)
+    }
+
+    func setMuted(_ isMuted: Bool, for key: AppKey) {
+        var settings = settings(for: key)
+        settings.isMuted = isMuted
+        update(settings, for: key)
+    }
+
+    func toggleMute(for key: AppKey) {
+        setMuted(!state(for: key).isMuted, for: key)
+    }
+
+    func setMode(_ mode: ControlMode, for key: AppKey) {
+        var settings = settings(for: key)
+        settings.mode = mode
+        update(settings, for: key)
+    }
+
+    func setBoost(decibels: Double, for key: AppKey) {
+        var settings = settings(for: key)
+        settings.setBoost(decibels: decibels)
+        if decibels > 0 { settings.mode = .fullControl }
+        update(settings, for: key)
+    }
+
+    func setEqualizer(_ equalizer: EqualizerSettings, for key: AppKey) {
+        var settings = settings(for: key)
+        settings.equalizer = equalizer
+        if !equalizer.isFlat { settings.mode = .fullControl }
+        update(settings, for: key)
+    }
+
+    func resetSettings(for key: AppKey) {
+        appSettings.removeValue(forKey: key)
+        applySoon()
+        saveSoon()
+    }
+
+    private func update(_ settings: AppAudioSettings, for key: AppKey) {
+        appSettings[key] = settings
+        applySoon()
+        saveSoon()
+    }
+
+    // MARK: - Focus and profiles
+
+    func toggleFocusMode() {
+        focus.isActive.toggle()
+        applySoon()
+        saveSoon()
+    }
+
+    func toggleFocusMembership(for key: AppKey) {
+        focus.toggle(key)
+        applySoon()
+        saveSoon()
+    }
+
+    func activateProfile(_ profile: AudioProfile?) {
+        activeProfileID = profile?.id
+        // A profile describes a whole state, so per-app overrides are cleared: leaving
+        // them would make the profile look broken.
+        if profile != nil {
+            appSettings.removeAll()
+        }
+        applySoon()
+        saveSoon()
+    }
+
+    func saveCurrentAsProfile(named name: String) {
+        let profile = AudioProfile(name: name, settings: appSettings, focus: focus)
+        profiles.append(profile)
+        activeProfileID = profile.id
+        saveSoon()
+    }
+
+    func deleteProfile(_ profile: AudioProfile) {
+        profiles.removeAll { $0.id == profile.id }
+        if activeProfileID == profile.id {
+            activeProfileID = nil
+        }
+        applySoon()
+        saveSoon()
+    }
+
+    func setOutputLimit(_ limit: OutputLimit) {
+        outputLimit = limit
+        applySoon()
+        saveSoon()
+    }
+
+    // MARK: - Schedule
+
+    func addScheduleRule(_ rule: ScheduleRule) {
+        scheduleRules.append(rule)
+        recomputeSchedule()
+        scheduleNextScheduleWakeUp()
+        applySoon()
+        saveSoon()
+    }
+
+    func updateScheduleRule(_ rule: ScheduleRule) {
+        guard let index = scheduleRules.firstIndex(where: { $0.id == rule.id }) else { return }
+        scheduleRules[index] = rule
+        recomputeSchedule()
+        scheduleNextScheduleWakeUp()
+        applySoon()
+        saveSoon()
+    }
+
+    func deleteScheduleRule(_ rule: ScheduleRule) {
+        scheduleRules.removeAll { $0.id == rule.id }
+        recomputeSchedule()
+        scheduleNextScheduleWakeUp()
+        applySoon()
+        saveSoon()
+    }
+
+    /// Works out what the currently active rules mean for the policy.
+    private func recomputeSchedule() {
+        let active = ScheduleEngine.activeRules(scheduleRules, at: Date(), calendar: calendar)
+        activeScheduleRuleNames = active.map(\.name)
+
+        var muted: Set<AppKey> = []
+        var focusOverride: FocusMode?
+        var profileOverride: UUID?
+
+        for rule in active {
+            switch rule.action {
+            case .muteApps(let keys):
+                muted.formUnion(keys)
+            case .focusOn(let keys):
+                focusOverride = FocusMode(isActive: true, allowedApps: keys)
+            case .applyProfile(let id):
+                profileOverride = id
+            }
+        }
+
+        scheduleMutedApps = muted
+        scheduleFocus = focusOverride
+        if let profileOverride, profiles.contains(where: { $0.id == profileOverride }) {
+            activeProfileID = profileOverride
+        }
+    }
+
+    /// Sleeps exactly until the next rule boundary — no repeating timer anywhere.
+    private func scheduleNextScheduleWakeUp() {
+        scheduleTask?.cancel()
+
+        guard
+            let next = ScheduleEngine.nextTransition(for: scheduleRules, after: Date(), calendar: calendar)
+        else {
+            scheduleTask = nil
+            return
+        }
+
+        let interval = max(next.timeIntervalSinceNow, 1)
+        scheduleTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(interval))
+            guard !Task.isCancelled, let self else { return }
+            recomputeSchedule()
+            applySoon()
+            scheduleNextScheduleWakeUp()
+        }
+    }
+
+    // MARK: - Process updates
+
+    private func processesChanged(_ processes: [AudioProcessSnapshot]) {
+        let grouped = AppGrouping.group(processes, excluding: ownBundleIdentifier)
+        guard grouped != apps else { return }
+        apps = grouped
+        applySoon()
+    }
+
+    // MARK: - Applying to the engine
+
+    /// Coalesces rapid changes (a slider drag) into one engine update.
+    private func applySoon() {
+        applyTask?.cancel()
+        applyTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(40))
+            guard !Task.isCancelled, let self else { return }
+            await applyNow()
+        }
+    }
+
+    private func applyNow() async {
+        let policy = policy
+        let apps = apps
+        let states = policy.activeStates(for: apps)
+
+        guard !states.isEmpty else {
+            // Nothing to control: release every Core Audio object we hold.
+            await engine.shutdown()
+            return
+        }
+
+        guard permission == .granted else { return }
+
+        do {
+            try await engine.apply(states: states, for: apps)
+        } catch EngineError.permissionRequired {
+            permission = await engine.permissionStatus()
+        } catch {
+            // Applying failed; audio keeps playing untouched, which is the safe outcome.
+            engineStatus = .degraded(.tapCreationFailed)
+        }
+    }
+
+    // MARK: - Metering
+
+    private func panelVisibilityChanged() {
+        meterTask?.cancel()
+        meterTask = nil
+        guard isPanelVisible else {
+            levels = [:]
+            return
+        }
+
+        meterTask = Task { [weak self] in
+            // 15 Hz is enough for a level meter to look alive and keeps the redraw cost
+            // in the noise. Nothing runs at all while the panel is closed.
+            while !Task.isCancelled {
+                guard let self else { return }
+                if let tapEngine = engine as? TapEngine {
+                    let peaks = await tapEngine.peakLevels()
+                    if !Task.isCancelled {
+                        levels = peaks
+                    }
+                }
+                try? await Task.sleep(for: .milliseconds(66))
+            }
+        }
+    }
+
+    // MARK: - Persistence
+
+    private func loadSettings() async {
+        let result = await store.load()
+        let state = result.state
+
+        appSettings = state.appSettings
+        profiles = state.profiles
+        activeProfileID = state.activeProfileID
+        scheduleRules = state.scheduleRules
+        focus = state.focus
+        outputLimit = state.outputLimit
+        preferences = state.preferences
+
+        switch result.outcome {
+        case .recoveredFromCorruptFile:
+            loadWarning = String(localized: "Your settings could not be read and have been reset.")
+        case .loaded, .noFileYet, .migrated:
+            loadWarning = nil
+        }
+    }
+
+    /// Debounced so dragging a slider does not write the file on every frame.
+    private func saveSoon() {
+        saveTask?.cancel()
+        saveTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled, let self else { return }
+            await persist()
+        }
+    }
+
+    private func persist() async {
+        let state = PersistedState(
+            appSettings: appSettings,
+            profiles: profiles,
+            activeProfileID: activeProfileID,
+            scheduleRules: scheduleRules,
+            focus: focus,
+            outputLimit: outputLimit,
+            preferences: preferences
+        )
+        try? await store.save(state)
+    }
+}

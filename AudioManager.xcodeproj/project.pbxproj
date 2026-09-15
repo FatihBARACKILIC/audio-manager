@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		3DCBF2010000000000000001 /* AudioDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 3DCBF2020000000000000001 /* AudioDomain */; };
+		3DCBF2010000000000000002 /* AudioPersistence in Frameworks */ = {isa = PBXBuildFile; productRef = 3DCBF2020000000000000002 /* AudioPersistence */; };
+		3DCBF2010000000000000003 /* AudioCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3DCBF2020000000000000003 /* AudioCore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		3DCBF1693059945C00285AE4 /* AudioManager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AudioManager.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +29,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3DCBF2010000000000000001 /* AudioDomain in Frameworks */,
+				3DCBF2010000000000000002 /* AudioPersistence in Frameworks */,
+				3DCBF2010000000000000003 /* AudioCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +74,9 @@
 			);
 			name = AudioManager;
 			packageProductDependencies = (
+				3DCBF2020000000000000001 /* AudioDomain */,
+				3DCBF2020000000000000002 /* AudioPersistence */,
+				3DCBF2020000000000000003 /* AudioCore */,
 			);
 			productName = AudioManager;
 			productReference = 3DCBF1693059945C00285AE4 /* AudioManager.app */;
@@ -94,6 +106,9 @@
 			);
 			mainGroup = 3DCBF1603059945C00285AE4;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				3DCBF2030000000000000001 /* XCLocalSwiftPackageReference "Packages/AudioManagerKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3DCBF16A3059945C00285AE4 /* Products */;
 			projectDirPath = "";
@@ -260,7 +275,7 @@
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = AudioManager/Info.plist;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -294,7 +309,7 @@
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = AudioManager/Info.plist;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -335,6 +350,28 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		3DCBF2030000000000000001 /* XCLocalSwiftPackageReference "Packages/AudioManagerKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/AudioManagerKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3DCBF2020000000000000001 /* AudioDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AudioDomain;
+		};
+		3DCBF2020000000000000002 /* AudioPersistence */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AudioPersistence;
+		};
+		3DCBF2020000000000000003 /* AudioCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AudioCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 3DCBF1613059945C00285AE4 /* Project object */;
 }

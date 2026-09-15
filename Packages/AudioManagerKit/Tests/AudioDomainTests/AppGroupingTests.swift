@@ -12,7 +12,8 @@ struct AppGroupingTests {
         containerBundle: String? = nil,
         containerPath: String? = nil,
         name: String? = nil,
-        playing: Bool = false
+        playing: Bool = false,
+        regular: Bool? = nil
     ) -> AudioProcessSnapshot {
         AudioProcessSnapshot(
             audioObjectID: id,
@@ -21,7 +22,10 @@ struct AppGroupingTests {
             containerBundlePath: containerPath,
             containerBundleIdentifier: containerBundle,
             displayName: name,
-            isRunningOutput: playing
+            isRunningOutput: playing,
+            // Belonging to an app bundle stands in for "the user can see this app",
+            // which is what the real resolver reports from the workspace.
+            isRegularApp: regular ?? (containerPath != nil)
         )
     }
 
@@ -125,5 +129,53 @@ struct AppGroupingTests {
 
         #expect(first == second)
         #expect(first == [.bundle("com.a.App"), .bundle("com.b.App")])
+    }
+
+    @Test("A background agent is hidden unless it is actually playing")
+    func hidesBackgroundAgents() {
+        let silentAgent = process(
+            id: 1, pid: 700,
+            containerBundle: "com.example.agent",
+            containerPath: "/Applications/Agent.app",
+            name: "Agent",
+            regular: false
+        )
+        let playingAgent = process(
+            id: 2, pid: 701,
+            containerBundle: "com.example.agent",
+            containerPath: "/Applications/Agent.app",
+            name: "Agent",
+            playing: true,
+            regular: false
+        )
+
+        #expect(AppGrouping.group([silentAgent]).isEmpty)
+        #expect(AppGrouping.group([playingAgent]).count == 1)
+    }
+
+    @Test("Explicitly excluded bundle identifiers never appear")
+    func honoursExclusions() {
+        let processes = [
+            process(id: 1, pid: 1, containerBundle: "com.barackilic.AudioManager", containerPath: "/Applications/Audio Manager.app", name: "Audio Manager"),
+            process(id: 2, pid: 2, containerBundle: "com.apple.Music", containerPath: "/Applications/Music.app", name: "Music"),
+        ]
+
+        let apps = AppGrouping.group(processes, excluding: ["com.barackilic.AudioManager"])
+
+        #expect(apps.map(\.name) == ["Music"])
+    }
+
+    @Test("An excluded app's helper processes are hidden too")
+    func exclusionCoversHelpers() {
+        let helper = process(
+            id: 1, pid: 1,
+            bundle: "com.barackilic.AudioManager.helper",
+            containerBundle: "com.barackilic.AudioManager",
+            containerPath: "/Applications/Audio Manager.app",
+            name: "Audio Manager",
+            playing: true
+        )
+
+        #expect(AppGrouping.group([helper], excluding: ["com.barackilic.AudioManager"]).isEmpty)
     }
 }

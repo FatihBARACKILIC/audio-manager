@@ -148,6 +148,8 @@ public final class AudioProcessObserver: AudioProcessObserving, @unchecked Senda
     }
 
     private func readProcesses() -> [AudioProcessSnapshot] {
+        // One workspace snapshot per refresh, shared by every process below.
+        let index = RunningAppIndex()
         let address = AudioObjectProperty.address(AudioSelectors.processList)
         guard let objectIDs = try? AudioObjectProperty.objectIDs(AudioObjectID(kAudioObjectSystemObject), address) else {
             return []
@@ -174,7 +176,8 @@ public final class AudioProcessObserver: AudioProcessObserving, @unchecked Senda
 
             let identity = ProcessIdentity.describe(
                 processID: pid,
-                coreAudioBundleIdentifier: bundleIdentifier
+                coreAudioBundleIdentifier: bundleIdentifier,
+                index: index
             )
 
             return AudioProcessSnapshot(
@@ -184,7 +187,8 @@ public final class AudioProcessObserver: AudioProcessObserving, @unchecked Senda
                 containerBundlePath: identity.bundlePath,
                 containerBundleIdentifier: identity.bundleIdentifier,
                 displayName: identity.displayName,
-                isRunningOutput: isRunningOutput
+                isRunningOutput: isRunningOutput,
+                isRegularApp: identity.isRegularApp
             )
         }
     }

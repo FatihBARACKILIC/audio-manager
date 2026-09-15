@@ -80,6 +80,9 @@ public struct AudioProcessSnapshot: Hashable, Sendable, Identifiable {
     public var containerBundleIdentifier: String?
     public var displayName: String?
     public var isRunningOutput: Bool
+    /// True when this process belongs to an app the user can see and switch to, as
+    /// opposed to a daemon or a background agent.
+    public var isRegularApp: Bool
 
     public var id: UInt32 { audioObjectID }
 
@@ -90,7 +93,8 @@ public struct AudioProcessSnapshot: Hashable, Sendable, Identifiable {
         containerBundlePath: String? = nil,
         containerBundleIdentifier: String? = nil,
         displayName: String? = nil,
-        isRunningOutput: Bool = false
+        isRunningOutput: Bool = false,
+        isRegularApp: Bool = false
     ) {
         self.audioObjectID = audioObjectID
         self.processID = processID
@@ -99,6 +103,7 @@ public struct AudioProcessSnapshot: Hashable, Sendable, Identifiable {
         self.containerBundleIdentifier = containerBundleIdentifier
         self.displayName = displayName
         self.isRunningOutput = isRunningOutput
+        self.isRegularApp = isRegularApp
     }
 }
 

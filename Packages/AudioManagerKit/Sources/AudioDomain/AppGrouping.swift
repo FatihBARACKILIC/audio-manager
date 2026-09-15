@@ -23,6 +23,15 @@ public enum AppGrouping {
         "com.apple.TelephonyUtilities",
         "com.apple.cloudpaird",
         "com.apple.coreaudiod",
+        "com.apple.loginwindow",
+        "com.apple.dock",
+        "com.apple.systemuiserver",
+        "com.apple.notificationcenterui",
+        "com.apple.Spotlight",
+        "com.apple.WindowServer",
+        "com.apple.siri",
+        "com.apple.Siri",
+        "com.apple.talagent",
     ]
 
     /// Suffixes Chromium/Electron append to a helper's bundle identifier.
@@ -59,16 +68,28 @@ public enum AppGrouping {
     }
 
     /// Whether a process should ever be offered to the user for control.
-    public static func isUserFacing(_ process: AudioProcessSnapshot) -> Bool {
+    ///
+    /// - Parameter excluded: Bundle identifiers to hide on top of the built-in list;
+    ///   the app passes its own identifier so it never offers to mute itself.
+    public static func isUserFacing(
+        _ process: AudioProcessSnapshot,
+        excluding excluded: Set<String> = []
+    ) -> Bool {
         let identifiers = [process.containerBundleIdentifier, process.bundleIdentifier]
             .compactMap { $0 }
             .map(normalizedBundleIdentifier)
+
         if identifiers.contains(where: systemProcessIdentifiers.contains) {
             return false
         }
-        // A real app bundle is always listed, even when it is silent, so the user can
-        // pre-mute it. Anything else only shows up while it is actually playing.
-        if process.containerBundlePath != nil {
+        if identifiers.contains(where: excluded.contains) {
+            return false
+        }
+
+        // A normal app the user can switch to is always listed, even while silent, so
+        // they can mute it before it makes a sound. Background agents and daemons only
+        // appear while they are actually playing something.
+        if process.isRegularApp {
             return true
         }
         return process.isRunningOutput
@@ -94,11 +115,14 @@ public enum AppGrouping {
 
     /// Groups processes into apps, dropping system audio plumbing, and orders them the
     /// way the panel shows them: apps that are playing first, then alphabetically.
-    public static func group(_ processes: [AudioProcessSnapshot]) -> [AudioApp] {
+    public static func group(
+        _ processes: [AudioProcessSnapshot],
+        excluding excluded: Set<String> = []
+    ) -> [AudioApp] {
         var grouped: [AppKey: [AudioProcessSnapshot]] = [:]
         var order: [AppKey] = []
 
-        for process in processes where isUserFacing(process) {
+        for process in processes where isUserFacing(process, excluding: excluded) {
             let key = key(for: process)
             if grouped[key] == nil {
                 order.append(key)
