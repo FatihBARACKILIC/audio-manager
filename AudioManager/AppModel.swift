@@ -47,6 +47,10 @@ final class AppModel {
     private let observer: AudioProcessObserver
     private let store: SettingsStore
     private let calendar: Calendar
+    private let notifications = NotificationService()
+
+    /// What the engine was last told, so automatic changes can be announced.
+    private var lastStates: [AppKey: EffectiveAppState] = [:]
 
     /// Our own bundle identifier, so the panel never offers to mute Audio Manager.
     private let ownBundleIdentifier: Set<String>
@@ -105,6 +109,8 @@ final class AppModel {
         recomputeSchedule()
         scheduleNextScheduleWakeUp()
         applySoon()
+
+        await notifications.prepare(enabled: preferences.showNotifications)
     }
 
     func stop() async {
@@ -363,6 +369,8 @@ final class AppModel {
         let apps = apps
         let states = policy.activeStates(for: apps)
 
+        announce(states: states, apps: apps)
+
         guard !states.isEmpty else {
             // Nothing to control: release every Core Audio object we hold.
             await engine.shutdown()
@@ -379,6 +387,23 @@ final class AppModel {
             // Applying failed; audio keeps playing untouched, which is the safe outcome.
             engineStatus = .degraded(.tapCreationFailed)
         }
+    }
+
+    /// Notifies about changes the user did not make themselves.
+    private func announce(states: [EffectiveAppState], apps: [AudioApp]) {
+        let byKey = Dictionary(uniqueKeysWithValues: states.map { ($0.key, $0) })
+        notifications.reportAutomaticChanges(
+            previous: lastStates,
+            current: byKey,
+            apps: apps,
+            enabled: preferences.showNotifications
+        )
+        notifications.reportLoudApps(
+            states: byKey,
+            apps: apps,
+            enabled: preferences.warnOnHighVolume
+        )
+        lastStates = byKey
     }
 
     // MARK: - Metering

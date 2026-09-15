@@ -69,8 +69,8 @@ struct EqualizerView: View {
     private func label(for band: Int) -> String {
         let frequency = EqualizerSettings.bandFrequencies[band]
         return frequency >= 1000
-            ? String(format: "%.0f kilohertz", frequency / 1000)
-            : String(format: "%.0f hertz", frequency)
+            ? String(localized: "\(Int(frequency / 1000)) kilohertz")
+            : String(localized: "\(Int(frequency)) hertz")
     }
 
     private func shortLabel(for band: Int) -> String {

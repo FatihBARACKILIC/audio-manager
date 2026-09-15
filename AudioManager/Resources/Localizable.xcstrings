@@ -1,0 +1,1172 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Audio Manager": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio Manager"
+          }
+        }
+      }
+    },
+    "Audio Manager Settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio Manager Ayarları"
+          }
+        }
+      }
+    },
+    "Your settings could not be read and have been reset.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayarların okunamadı ve sıfırlandı."
+          }
+        }
+      }
+    },
+    "Volume for %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ses seviyesi"
+          }
+        }
+      }
+    },
+    "%lld percent": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "yüzde %lld"
+          }
+        }
+      }
+    },
+    "Unmute %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ sesini aç"
+          }
+        }
+      }
+    },
+    "Mute %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ sesini kapat"
+          }
+        }
+      }
+    },
+    "More options for %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ için diğer seçenekler"
+          }
+        }
+      }
+    },
+    "Mute only": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yalnızca sessize al"
+          }
+        }
+      }
+    },
+    "Full control": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tam kontrol"
+          }
+        }
+      }
+    },
+    "Mode": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mod"
+          }
+        }
+      }
+    },
+    "Boost": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Güçlendirme"
+          }
+        }
+      }
+    },
+    "Boost for %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ için güçlendirme"
+          }
+        }
+      }
+    },
+    "Allow in focus mode": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odak modunda izin ver"
+          }
+        }
+      }
+    },
+    "Reset": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sıfırla"
+          }
+        }
+      }
+    },
+    "Set by focus mode": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odak modu tarafından ayarlandı"
+          }
+        }
+      }
+    },
+    "Set by a schedule rule": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir zamanlama kuralı tarafından ayarlandı"
+          }
+        }
+      }
+    },
+    "Set by the active profile": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etkin profil tarafından ayarlandı"
+          }
+        }
+      }
+    },
+    "Set by you": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Senin tarafından ayarlandı"
+          }
+        }
+      }
+    },
+    "Equalizer": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ekolayzer"
+          }
+        }
+      }
+    },
+    "Flat": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Düz"
+          }
+        }
+      }
+    },
+    "%lld decibels": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld desibel"
+          }
+        }
+      }
+    },
+    "%lld hertz": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld hertz"
+          }
+        }
+      }
+    },
+    "%lld kilohertz": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld kilohertz"
+          }
+        }
+      }
+    },
+    "Focus": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odak"
+          }
+        }
+      }
+    },
+    "Focus mode is on. Only allowed apps can make sound.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odak modu açık. Yalnızca izin verilen uygulamalar ses çıkarabilir."
+          }
+        }
+      }
+    },
+    "Turn on focus mode": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odak modunu aç"
+          }
+        }
+      }
+    },
+    "Settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayarlar"
+          }
+        }
+      }
+    },
+    "Open settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayarları aç"
+          }
+        }
+      }
+    },
+    "No apps with audio yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henüz sesi olan uygulama yok"
+          }
+        }
+      }
+    },
+    "Apps appear here as soon as they are running.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uygulamalar çalışmaya başlar başlamaz burada görünür."
+          }
+        }
+      }
+    },
+    "No profile": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profil yok"
+          }
+        }
+      }
+    },
+    "Quit": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çık"
+          }
+        }
+      }
+    },
+    "Audio Manager needs permission to capture system audio.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio Manager'ın sistem sesini yakalama izni gerekiyor."
+          }
+        }
+      }
+    },
+    "One app could not be controlled and was left untouched.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir uygulama kontrol edilemedi ve olduğu gibi bırakıldı."
+          }
+        }
+      }
+    },
+    "The output device changed. Audio is playing normally.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çıkış aygıtı değişti. Ses normal şekilde çalıyor."
+          }
+        }
+      }
+    },
+    "This app plays protected content that cannot be controlled.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu uygulama, kontrol edilemeyen korumalı içerik çalıyor."
+          }
+        }
+      }
+    },
+    "This app's audio format is not supported.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu uygulamanın ses biçimi desteklenmiyor."
+          }
+        }
+      }
+    },
+    "Permission needed": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İzin gerekiyor"
+          }
+        }
+      }
+    },
+    "macOS treats controlling another app's volume as capturing its audio. Audio Manager never records or stores anything.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS, başka bir uygulamanın sesini kontrol etmeyi o sesi yakalamak olarak görür. Audio Manager hiçbir şeyi kaydetmez ya da saklamaz."
+          }
+        }
+      }
+    },
+    "Grant access": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İzin ver"
+          }
+        }
+      }
+    },
+    "Open System Settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sistem Ayarları'nı aç"
+          }
+        }
+      }
+    },
+    "Active profile": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etkin profil"
+          }
+        }
+      }
+    },
+    "New profile name": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeni profil adı"
+          }
+        }
+      }
+    },
+    "Save the current setup as a profile": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mevcut düzeni profil olarak kaydet"
+          }
+        }
+      }
+    },
+    "Delete the selected profile": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seçili profili sil"
+          }
+        }
+      }
+    },
+    "Apps with explicit settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayarı belirtilmiş uygulamalar"
+          }
+        }
+      }
+    },
+    "Left as they are": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oldukları gibi bırakılır"
+          }
+        }
+      }
+    },
+    "Set to a shared fallback": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ortak bir varsayılana ayarlanır"
+          }
+        }
+      }
+    },
+    "Other apps": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diğer uygulamalar"
+          }
+        }
+      }
+    },
+    "Apps allowed in focus mode": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odak modunda izin verilen uygulamalar"
+          }
+        }
+      }
+    },
+    "Activate this profile": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu profili etkinleştir"
+          }
+        }
+      }
+    },
+    "Delete profile": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profili sil"
+          }
+        }
+      }
+    },
+    "Activating a profile clears per-app overrides so the profile is exactly what you hear. Change anything afterwards and save it as a new profile to keep it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir profili etkinleştirmek uygulama bazlı geçersiz kılmaları temizler; böylece duyduğun şey tam olarak profilin kendisidir. Sonradan bir şey değiştirirsen, saklamak için yeni profil olarak kaydet."
+          }
+        }
+      }
+    },
+    "Select a profile": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir profil seç"
+          }
+        }
+      }
+    },
+    "Set up your apps the way you want them, then save that as a profile.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uygulamaları istediğin gibi ayarla, sonra bunu profil olarak kaydet."
+          }
+        }
+      }
+    },
+    "No rule is active right now": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şu anda etkin kural yok"
+          }
+        }
+      }
+    },
+    "Add a rule": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kural ekle"
+          }
+        }
+      }
+    },
+    "Delete the selected rule": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seçili kuralı sil"
+          }
+        }
+      }
+    },
+    "Select a rule": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir kural seç"
+          }
+        }
+      }
+    },
+    "Every day": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Her gün"
+          }
+        }
+      }
+    },
+    "New rule": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeni kural"
+          }
+        }
+      }
+    },
+    "Name": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ad"
+          }
+        }
+      }
+    },
+    "Enabled": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etkin"
+          }
+        }
+      }
+    },
+    "From": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başlangıç"
+          }
+        }
+      }
+    },
+    "To": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bitiş"
+          }
+        }
+      }
+    },
+    "This window runs past midnight into the next day.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu aralık gece yarısını aşıp ertesi güne uzanıyor."
+          }
+        }
+      }
+    },
+    "A rule that starts and ends at the same time never runs.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başlangıcı ve bitişi aynı olan bir kural hiçbir zaman çalışmaz."
+          }
+        }
+      }
+    },
+    "When": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ne zaman"
+          }
+        }
+      }
+    },
+    "Mute apps": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uygulamaları sessize al"
+          }
+        }
+      }
+    },
+    "Focus on apps": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uygulamalara odaklan"
+          }
+        }
+      }
+    },
+    "Activate a profile": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profil etkinleştir"
+          }
+        }
+      }
+    },
+    "Do this": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şunu yap"
+          }
+        }
+      }
+    },
+    "Profile": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profil"
+          }
+        }
+      }
+    },
+    "What": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ne"
+          }
+        }
+      }
+    },
+    "No apps are running to choose from yet.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seçilebilecek çalışan bir uygulama henüz yok."
+          }
+        }
+      }
+    },
+    "General": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Genel"
+          }
+        }
+      }
+    },
+    "Profiles": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profiller"
+          }
+        }
+      }
+    },
+    "Schedule": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zamanlama"
+          }
+        }
+      }
+    },
+    "Shortcuts": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kısayollar"
+          }
+        }
+      }
+    },
+    "Open at login": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Açılışta başlat"
+          }
+        }
+      }
+    },
+    "Show notifications when apps are muted or unmuted": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uygulamalar sessize alındığında veya sesi açıldığında bildirim göster"
+          }
+        }
+      }
+    },
+    "Warn me when an app is boosted to a loud level": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir uygulama yüksek seviyeye güçlendirildiğinde beni uyar"
+          }
+        }
+      }
+    },
+    "Limit maximum volume": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maksimum sesi sınırla"
+          }
+        }
+      }
+    },
+    "Applied after volume, boost and EQ, so nothing can get past it. Values above 100% let quiet apps be amplified; keep it at or below 100% to protect your hearing.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses, güçlendirme ve ekolayzerden sonra uygulanır; hiçbir şey bunu aşamaz. %100 üzerindeki değerler kısık uygulamaların yükseltilmesine izin verir; işitme sağlığın için %100 veya altında tut."
+          }
+        }
+      }
+    },
+    "Hearing safety": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İşitme sağlığı"
+          }
+        }
+      }
+    },
+    "Audio capture access": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses yakalama izni"
+          }
+        }
+      }
+    },
+    "macOS classifies controlling another app's volume as capturing its audio. Audio Manager processes audio in memory only — it never records, saves or sends anything.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS, başka bir uygulamanın sesini kontrol etmeyi o sesi yakalamak olarak sınıflandırır. Audio Manager sesi yalnızca bellekte işler — hiçbir şeyi kaydetmez, saklamaz veya göndermez."
+          }
+        }
+      }
+    },
+    "Permission": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İzin"
+          }
+        }
+      }
+    },
+    "Granted": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verildi"
+          }
+        }
+      }
+    },
+    "Denied — enable it in System Settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reddedildi — Sistem Ayarları'ndan etkinleştir"
+          }
+        }
+      }
+    },
+    "Not requested yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henüz istenmedi"
+          }
+        }
+      }
+    },
+    "Open panel": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paneli aç"
+          }
+        }
+      }
+    },
+    "Toggle focus mode": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odak modunu aç/kapat"
+          }
+        }
+      }
+    },
+    "Write shortcuts as modifiers plus a key, for example cmd+shift+v. Leave a field empty to remove its shortcut.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kısayolları değiştirici tuşlar artı bir tuş olarak yaz, örneğin cmd+shift+v. Kısayolu kaldırmak için alanı boş bırak."
+          }
+        }
+      }
+    },
+    "Keyboard shortcuts": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klavye kısayolları"
+          }
+        }
+      }
+    },
+    "Currently registered": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şu an kayıtlı"
+          }
+        }
+      }
+    },
+    "None": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yok"
+          }
+        }
+      }
+    },
+    "Mute only silences this app at the source. No processing, no added delay.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yalnızca sessize al, bu uygulamayı kaynağında susturur. İşleme yok, ek gecikme yok."
+          }
+        }
+      }
+    },
+    "Full control routes this app through Audio Manager so volume, boost and EQ work. Adds a few milliseconds of delay — fine for music and video, less ideal for calls.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tam kontrol, bu uygulamayı Audio Manager üzerinden geçirir; böylece ses seviyesi, güçlendirme ve ekolayzer çalışır. Birkaç milisaniye gecikme ekler — müzik ve video için sorunsuz, görüşmeler için daha az uygun."
+          }
+        }
+      }
+    },
+    "%@ muted": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ sessize alındı"
+          }
+        }
+      }
+    },
+    "%@ unmuted": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ sesi açıldı"
+          }
+        }
+      }
+    },
+    "A schedule rule changed this.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bunu bir zamanlama kuralı değiştirdi."
+          }
+        }
+      }
+    },
+    "Focus mode changed this.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bunu odak modu değiştirdi."
+          }
+        }
+      }
+    },
+    "%@ is boosted": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ güçlendirildi"
+          }
+        }
+      }
+    },
+    "This app is playing louder than its original level. Long listening at high volume can damage your hearing.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu uygulama orijinal seviyesinden daha yüksek çalıyor. Yüksek seste uzun süre dinlemek işitmene zarar verebilir."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
