@@ -285,6 +285,20 @@ pull or process its audio.
 - No background work while the user is away: respect system sleep/wake, and tear
   the engine down rather than keeping it warm.
 
+### Measured baseline (Release, Apple Silicon, recorded 2026-09-15)
+
+The numbers the app actually hits today, for comparison when something regresses:
+
+| State | CPU | Memory (phys footprint) |
+|---|---|---|
+| Idle, panel closed, nothing controlled | 0.0% over 30 s | 13 MB |
+| 3 apps in full control, EQ on, meters running | ~1.0% over 30 s | 16 MB |
+
+Profiling the rendering case shows the render callback taking about 0.5% of the audio
+IO thread's samples: the process cost is dominated by the audio thread waking up ~94
+times a second, not by the DSP. `coreaudiod` costs about 8.5% of a core with audio
+merely playing and about 11% with three apps tapped.
+
 ### Verification
 
 - Every audio- or UI-touching change is checked against the table above before it is
@@ -297,9 +311,11 @@ pull or process its audio.
 
 ## 7. UI rules
 
-- SwiftUI first: `MenuBarExtra` for the panel, `Settings` scene for preferences.
-  Use AppKit only where SwiftUI cannot do the job (global hotkey registration,
-  login item, a few window behaviors) and keep it isolated in small wrappers.
+- SwiftUI for every view. The app *shell* is AppKit — an `NSStatusItem` with an
+  `NSPopover` and a plain `NSWindow` for settings — because a global shortcut has to
+  be able to open the panel and `MenuBarExtra` exposes no way to do that. That shell
+  is confined to `AppDelegate`; nothing else in the app touches AppKit except the
+  small wrappers for hotkeys, login item and app icons.
 - **No hardcoded user-facing strings.** Everything goes through
   `Localizable.xcstrings` with EN as source and TR provided.
 - SF Symbols only for iconography. No bundled icon fonts or bitmap icon sets.
@@ -370,7 +386,23 @@ Every feature ships with tests. "Write the tests later" is not an option here.
 
 ---
 
-## 12. When to stop and ask
+## 12. Diagnostics hooks
+
+The app accepts a few command line flags, and they are part of the contract:
+
+- `--dump-state` prints the grouped app list and the effective decision per app.
+- `--simulate-control` (with `--dump-state`) routes every app through the processing
+  path for one run, to prove the capture path end to end on a real machine.
+- `--watch <seconds>` keeps the engine running before reporting, and reports peak levels.
+- `--reset-settings` clears stored settings and writes defaults back.
+- `--show-panel` opens the panel at launch.
+
+**A diagnostics run must never write to the user's settings.** `--simulate-control`
+suspends persistence for the life of the process; keep that true for anything added
+here. Diagnostics read state and report it — they never become a second way to
+configure the app.
+
+## 13. When to stop and ask
 
 Stop and report to the user instead of improvising when:
 

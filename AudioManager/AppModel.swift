@@ -52,6 +52,10 @@ final class AppModel {
     /// What the engine was last told, so automatic changes can be announced.
     private var lastStates: [AppKey: EffectiveAppState] = [:]
 
+    /// Set by diagnostics runs. Nothing is written to disk while it is on, so a
+    /// throwaway test configuration can never end up in the user's real settings.
+    private var isPersistenceSuspended = false
+
     /// Our own bundle identifier, so the panel never offers to mute Audio Manager.
     private let ownBundleIdentifier: Set<String>
 
@@ -95,7 +99,7 @@ final class AppModel {
         observationTask = Task { [weak self] in
             guard let self else { return }
             for await processes in observer.processUpdates {
-                await self.processesChanged(processes)
+                self.processesChanged(processes)
             }
         }
 
@@ -268,6 +272,27 @@ final class AppModel {
         saveSoon()
     }
 
+    /// Puts every running app into full control at half volume with a shaped EQ,
+    /// without touching stored settings.
+    ///
+    /// Used by `--dump-state --simulate-control` to prove the capture, processing and
+    /// playback path end to end on a real machine, which no unit test can do.
+    func simulateFullControlForDiagnostics() {
+        isPersistenceSuspended = true
+        let profile = AudioProfile(
+            name: "Diagnostics",
+            unlistedApps: AppAudioSettings(
+                volume: 0.5,
+                mode: .fullControl,
+                equalizer: EqualizerSettings(isEnabled: true, gains: [6, 0, 0, 0, 0, 0, 0, 0, 0, -6])
+            )
+        )
+        profiles.append(profile)
+        activeProfileID = profile.id
+        appSettings.removeAll()
+        applySoon()
+    }
+
     // MARK: - Schedule
 
     func addScheduleRule(_ rule: ScheduleRule) {
@@ -432,6 +457,23 @@ final class AppModel {
         }
     }
 
+    /// Throws away every stored setting and writes defaults back.
+    ///
+    /// Exposed through `--reset-settings` so a bad state can always be recovered
+    /// without hunting through the container by hand.
+    func resetAllSettings() async {
+        appSettings = [:]
+        profiles = []
+        activeProfileID = nil
+        scheduleRules = []
+        focus = .off
+        outputLimit = OutputLimit()
+        preferences = Preferences()
+        isPersistenceSuspended = false
+        await persist()
+        await applyNow()
+    }
+
     // MARK: - Persistence
 
     private func loadSettings() async {
@@ -456,6 +498,7 @@ final class AppModel {
 
     /// Debounced so dragging a slider does not write the file on every frame.
     private func saveSoon() {
+        guard !isPersistenceSuspended else { return }
         saveTask?.cancel()
         saveTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(1))
@@ -465,6 +508,8 @@ final class AppModel {
     }
 
     private func persist() async {
+        guard !isPersistenceSuspended else { return }
+
         let state = PersistedState(
             appSettings: appSettings,
             profiles: profiles,

@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package-tests:
+    name: Package tests
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: swift --version
+
+      # The package holds all the logic and touches no audio hardware, so it runs
+      # anywhere. Hardware-dependent checks live in the app and are not run in CI.
+      - name: Build
+        working-directory: Packages/AudioManagerKit
+        run: swift build -v
+
+      - name: Test
+        working-directory: Packages/AudioManagerKit
+        run: swift test --parallel
+
+  app-build:
+    name: App build
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: xcodebuild -version
+
+      # Signing needs a developer identity that CI does not have, so the app is built
+      # unsigned; this still catches every compile and link error.
+      - name: Build app
+        run: |
+          xcodebuild build \
+            -project AudioManager.xcodeproj \
+            -scheme AudioManager \
+            -configuration Release \
+            -destination 'platform=macOS' \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            DEVELOPMENT_TEAM="" \
+            -quiet

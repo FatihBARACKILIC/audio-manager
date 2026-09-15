@@ -104,7 +104,7 @@ final class GlobalHotkeyCenter {
         let id = nextID
         nextID += 1
 
-        var hotKeyID = EventHotKeyID(signature: OSType(0x414D_4752), id: id) // 'AMGR'
+        let hotKeyID = EventHotKeyID(signature: OSType(0x414D_4752), id: id) // 'AMGR'
         var reference: EventHotKeyRef?
         let status = RegisterEventHotKey(
             shortcut.keyCode,
@@ -117,7 +117,6 @@ final class GlobalHotkeyCenter {
 
         guard status == noErr, let reference else { return nil }
         registrations[id] = Registration(ref: reference, action: action)
-        _ = hotKeyID
         return id
     }
 

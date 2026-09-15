@@ -24,7 +24,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task {
             await model.start()
 
+            if CommandLine.arguments.contains("--reset-settings") {
+                await model.resetAllSettings()
+                print("settings reset")
+                await model.stop()
+                NSApp.terminate(nil)
+                return
+            }
+
             if Diagnostics.isRequested {
+                if CommandLine.arguments.contains("--simulate-control") {
+                    model.simulateFullControlForDiagnostics()
+                }
+                if let seconds = Diagnostics.watchSeconds {
+                    // Metering only runs while the panel is visible, so pretend it is.
+                    model.isPanelVisible = true
+                    try? await Task.sleep(for: .seconds(seconds))
+                }
                 Diagnostics.dump(model)
                 await model.stop()
                 NSApp.terminate(nil)
