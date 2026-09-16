@@ -55,6 +55,8 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="-" \
             DEVELOPMENT_TEAM="" \
+            ARCHS="arm64 x86_64" \
+            ONLY_ACTIVE_ARCH=NO \
             -quiet
 
       # Xcode treats an ad-hoc identity as a development build and injects
@@ -62,7 +64,7 @@ jobs:
       # debugger and defeats the hardened runtime. Re-signing with the generated
       # entitlements minus that one keeps the sandbox and the audio entitlement — which
       # the app genuinely needs — and drops the one that should never ship.
-      - name: Drop the debug entitlement
+      - name: Harden the signature and check what we are about to publish
         run: |
           app="build/Build/Products/Release/AudioManager.app"
           entitlements="$RUNNER_TEMP/entitlements.plist"
@@ -84,6 +86,17 @@ jobs:
             echo "::error::get-task-allow is still present — refusing to publish."
             exit 1
           fi
+
+          # The runners are Apple Silicon, so an arm64-only slice builds and passes
+          # every check here while simply refusing to launch on an Intel Mac. The
+          # README promises both, so prove both are in the binary.
+          echo "Architectures: $(lipo -archs "$app/Contents/MacOS/AudioManager")"
+          for arch in arm64 x86_64; do
+            if ! lipo -archs "$app/Contents/MacOS/AudioManager" | grep -qw "$arch"; then
+              echo "::error::$arch is missing — refusing to publish a build that cannot run everywhere the README claims."
+              exit 1
+            fi
+          done
 
       - name: Package
         id: package
