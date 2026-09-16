@@ -309,6 +309,17 @@
         }
       }
     },
+    "Cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vazgeç"
+          }
+        }
+      }
+    },
     "Change any app in the panel, then press Update to fold those changes into this profile.": {
       "extractionState": "manual",
       "localizations": {
@@ -371,6 +382,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Seçili kuralı sil"
+          }
+        }
+      }
+    },
+    "Deletes your profiles, schedule rules and preferences, unmutes every app and turns off Open at login. The app itself is then shown in Finder for you to drag to the Trash — macOS does not let a sandboxed app delete itself.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profillerini, zamanlama kurallarını ve tercihlerini siler, bütün uygulamaların sesini geri açar ve açılışta başlatmayı kapatır. Uygulamanın kendisi ise Finder'da gösterilir, Çöp Sepeti'ne sen sürüklersin — macOS, sandbox içindeki bir uygulamanın kendini silmesine izin vermiyor."
           }
         }
       }
@@ -925,6 +947,39 @@
         }
       }
     },
+    "Remove": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaldır"
+          }
+        }
+      }
+    },
+    "Remove Audio Manager from this Mac?": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio Manager bu Mac'ten kaldırılsın mı?"
+          }
+        }
+      }
+    },
+    "Remove Audio Manager…": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio Manager'ı Kaldır…"
+          }
+        }
+      }
+    },
     "Reset": {
       "extractionState": "manual",
       "localizations": {
@@ -1273,6 +1328,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kısayolları değiştirici tuşlar artı bir tuş olarak yaz, örneğin cmd+shift+v. Kısayolu kaldırmak için alanı boş bırak."
+          }
+        }
+      }
+    },
+    "Your profiles, schedule rules and preferences will be deleted and every app will be unmuted. This cannot be undone.\n\nAudio Manager was installed with Homebrew, so finish with: brew uninstall --zap --cask audio-manager": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profillerin, zamanlama kuralların ve tercihlerin silinecek, bütün uygulamaların sesi geri açılacak. Bu işlem geri alınamaz.\n\nAudio Manager Homebrew ile kurulmuş, bu yüzden şununla tamamla: brew uninstall --zap --cask audio-manager"
+          }
+        }
+      }
+    },
+    "Your profiles, schedule rules and preferences will be deleted and every app will be unmuted. This cannot be undone.\n\nAudio Manager will then quit and show itself in Finder, so you can drag it to the Trash.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profillerin, zamanlama kuralların ve tercihlerin silinecek, bütün uygulamaların sesi geri açılacak. Bu işlem geri alınamaz.\n\nArdından Audio Manager kapanacak ve kendini Finder'da gösterecek; Çöp Sepeti'ne sürükleyebilirsin."
+          }
+        }
+      }
+    },
+    "Your settings could not be deleted. Everything else has been undone.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayarların silinemedi. Diğer her şey geri alındı."
           }
         }
       }

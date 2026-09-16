@@ -151,4 +151,44 @@ struct SettingsStoreTests {
         state.profiles = []
         #expect(state.activeProfile == nil)
     }
+
+    // MARK: - Removing everything
+
+    @Test("Erasing removes the stored file and the directory holding it")
+    func eraseRemovesEverything() async {
+        let directory = temporaryDirectory()
+        let store = SettingsStore(directory: directory)
+        try? await store.save(sampleState())
+        #expect(FileManager.default.fileExists(atPath: directory.path))
+
+        let erased = await store.erase()
+
+        #expect(erased)
+        #expect(!FileManager.default.fileExists(atPath: directory.path))
+    }
+
+    @Test("Erasing when nothing was written is still a success")
+    func eraseIsIdempotent() async {
+        let directory = temporaryDirectory()
+        try? FileManager.default.removeItem(at: directory)
+        let store = SettingsStore(directory: directory)
+
+        // Nothing to delete is the outcome the caller wanted, not a failure.
+        #expect(await store.erase())
+        #expect(await store.erase())
+    }
+
+    @Test("A store reloads to defaults after being erased")
+    func loadsDefaultsAfterErase() async {
+        let directory = temporaryDirectory()
+        let store = SettingsStore(directory: directory)
+        try? await store.save(sampleState())
+
+        _ = await store.erase()
+        let result = await store.load()
+
+        #expect(result.outcome == .noFileYet)
+        #expect(result.state.profiles.isEmpty)
+        #expect(result.state.appSettings.isEmpty)
+    }
 }

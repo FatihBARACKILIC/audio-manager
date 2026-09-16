@@ -54,6 +54,23 @@ public actor SettingsStore {
 
     public var url: URL { fileURL }
 
+    /// Deletes the stored document and the directory holding it.
+    ///
+    /// Used by the uninstall action, which has to leave nothing behind. Returns false
+    /// only when something was there and could not be removed — a missing file is a
+    /// success, because the goal is that nothing remains.
+    @discardableResult
+    public func erase() -> Bool {
+        let directory = fileURL.deletingLastPathComponent()
+        guard fileManager.fileExists(atPath: directory.path) else { return true }
+        do {
+            try fileManager.removeItem(at: directory)
+            return true
+        } catch {
+            return false
+        }
+    }
+
     /// Loads the document, falling back to defaults for a missing or unreadable file.
     /// Never throws: the app must start even when its settings are damaged.
     public func load() -> StoreLoadResult {

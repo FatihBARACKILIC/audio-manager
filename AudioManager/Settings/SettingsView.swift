@@ -1,3 +1,4 @@
+import AppKit
 import AudioDomain
 import AudioPersistence
 import SwiftUI
@@ -51,6 +52,8 @@ struct GeneralSettingsView: View {
     @Bindable var model: AppModel
     @State private var limitEnabled = true
     @State private var maximumGain = 1.0
+    @State private var isConfirmingRemoval = false
+    @State private var removalFailure: String?
 
     var body: some View {
         Form {
@@ -118,6 +121,26 @@ struct GeneralSettingsView: View {
             } header: {
                 Text("Permission")
             }
+
+            Section {
+                Button(role: .destructive) {
+                    isConfirmingRemoval = true
+                } label: {
+                    Text("Remove Audio Manager\u{2026}")
+                }
+
+                Text("Deletes your profiles, schedule rules and preferences, unmutes every app and turns off Open at login. The app itself is then shown in Finder for you to drag to the Trash — macOS does not let a sandboxed app delete itself.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if let removalFailure {
+                    Label(removalFailure, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            } header: {
+                Text("Remove")
+            }
         }
         .formStyle(.grouped)
         .onAppear {
@@ -126,6 +149,40 @@ struct GeneralSettingsView: View {
         }
         .onChange(of: limitEnabled) { _, _ in commitLimit() }
         .onChange(of: maximumGain) { _, _ in commitLimit() }
+        .alert(Text("Remove Audio Manager from this Mac?"), isPresented: $isConfirmingRemoval) {
+            Button(role: .cancel) {
+                isConfirmingRemoval = false
+            } label: {
+                Text("Cancel")
+            }
+
+            Button(role: .destructive) {
+                Task { await remove() }
+            } label: {
+                Text("Remove")
+            }
+        } message: {
+            removalMessage
+        }
+    }
+
+    private var removalMessage: Text {
+        if Uninstaller.looksLikeHomebrewInstall {
+            return Text("Your profiles, schedule rules and preferences will be deleted and every app will be unmuted. This cannot be undone.\n\nAudio Manager was installed with Homebrew, so finish with: brew uninstall --zap --cask audio-manager")
+        }
+        return Text("Your profiles, schedule rules and preferences will be deleted and every app will be unmuted. This cannot be undone.\n\nAudio Manager will then quit and show itself in Finder, so you can drag it to the Trash.")
+    }
+
+    private func remove() async {
+        let erased = await model.removeEverything()
+        guard erased else {
+            // Everything else is already undone; saying so beats quitting and leaving
+            // the user to wonder whether their settings are really gone.
+            removalFailure = String(localized: "Your settings could not be deleted. Everything else has been undone.")
+            return
+        }
+        Uninstaller.revealAppInFinder()
+        NSApp.terminate(nil)
     }
 
     private var gainLabel: String {

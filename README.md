@@ -140,6 +140,21 @@ usually on a laptop with lots of icons and a notch. Try quitting another menu ba
 
 ---
 
+## Uninstalling
+
+Settings → General → **Remove Audio Manager**. It deletes your profiles, schedule rules
+and preferences, unmutes every app, turns off Open at login, quits, and shows itself in
+Finder so you can drag it to the Trash.
+
+That last step is yours because macOS does not let a sandboxed app delete its own bundle
+— both `FileManager.trashItem` and `NSWorkspace.recycle` are refused.
+
+If you installed with Homebrew, use that instead so it does not leave a dangling record:
+
+```sh
+brew uninstall --zap --cask audio-manager
+```
+
 ## What it costs to run
 
 Audio Manager is meant to be invisible in Activity Monitor. Measured on Apple Silicon

@@ -544,6 +544,36 @@ final class AppModel {
         }
     }
 
+    /// Removes everything the app created on this machine, then stops.
+    ///
+    /// Order matters. The engine goes first so no app is left muted by a tap we are
+    /// about to stop maintaining, and persistence is suspended before the file is
+    /// deleted so a debounced save cannot write it straight back.
+    ///
+    /// Returns false when the stored settings could not be deleted, so the UI can say
+    /// so rather than claiming a clean removal.
+    @discardableResult
+    func removeEverything() async -> Bool {
+        isPersistenceSuspended = true
+        saveTask?.cancel()
+        applyTask?.cancel()
+        scheduleTask?.cancel()
+        meterTask?.cancel()
+
+        await engine.shutdown()
+        LoginItem.synchronize(enabled: false)
+
+        appSettings = [:]
+        profiles = []
+        activeProfileID = nil
+        scheduleRules = []
+        focus = .off
+        outputLimit = OutputLimit()
+        preferences = Preferences()
+
+        return await store.erase()
+    }
+
     /// Throws away every stored setting and writes defaults back.
     ///
     /// Exposed through `--reset-settings` so a bad state can always be recovered
