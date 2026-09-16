@@ -103,16 +103,31 @@ and import panels read and write the file the user picks. Nothing else.
 ## Releasing
 
 Pushing a `v*` tag runs [`.github/workflows/release.yml`](../.github/workflows/release.yml),
-which tests, builds, signs, notarises and publishes the zip, then points
-[`Casks/audio-manager.rb`](../Casks/audio-manager.rb) at it.
+which tests, builds, packages and publishes the zip, then points
+[`Casks/audio-manager.rb`](../Casks/audio-manager.rb) at it. **No repository secrets are
+needed.** Release notes come from `docs/release-notes-v<version>.md` when that file
+exists, so the published release and the changelog cannot drift apart.
 
-It needs five repository secrets: `DEVELOPER_ID_CERTIFICATE_P12` (base64 of a Developer
-ID Application `.p12`), `DEVELOPER_ID_CERTIFICATE_PASSWORD`, `APPLE_ID`,
-`APPLE_ID_APP_PASSWORD` (an app-specific password) and `APPLE_TEAM_ID`.
+### Signing, and what we do not have
 
-Users install from the cask with:
+The app is **ad-hoc signed** (`CODE_SIGN_IDENTITY="-"`), not signed with a Developer ID
+and not notarised. Notarising requires a paid Apple Developer Program membership, which
+this project does not have.
 
-```sh
-brew tap fatihbarackilic/audio-manager https://github.com/FatihBARACKILIC/audio-manager
-brew install --cask audio-manager
-```
+Ad-hoc is not a formality. An arm64 binary must carry a signature to run at all, and the
+signature is what embeds the entitlements the app cannot work without — the sandbox and
+`device.audio-input`, which process taps require. What ad-hoc does *not* do is satisfy
+Gatekeeper, so everyone who downloads a release has to clear the quarantine attribute
+once. The README explains that to users; the cask says it in its caveats.
+
+Xcode treats an ad-hoc identity as a development build and injects
+`com.apple.security.get-task-allow`, which lets any process running as the same user
+attach a debugger and defeats the hardened runtime. The workflow therefore re-signs with
+the generated entitlements minus that one, and **fails the build** if it is still present
+afterwards rather than publishing an app that carries it.
+
+If the project ever gets a paid membership, the change is to sign with
+`Developer ID Application` and add an `xcrun notarytool submit --wait` plus
+`xcrun stapler staple` step. Xcode strips `get-task-allow` by itself for a Developer ID
+build, so the re-signing step goes away with it, and every quarantine instruction in the
+README and the cask can go too.

@@ -17,10 +17,26 @@ brew install --cask audio-manager
 ```
 
 Or download `AudioManager-1.0.0.zip` below, unzip it, and drag **AudioManager.app** into
-your Applications folder. The app is signed and notarised by Apple, so it opens normally.
+your Applications folder.
 
-Open it once from Applications and a speaker icon appears in the menu bar — that is the
-whole app. Press ⌘⇧V to open the panel.
+### macOS will block it the first time
+
+Audio Manager is ad-hoc signed but **not notarised** — notarising requires a paid Apple
+Developer membership, and this is a free open-source project without one. So macOS
+refuses to open it until you allow it once:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/AudioManager.app
+```
+
+Or open it, let macOS block it, then go to **System Settings → Privacy & Security** and
+click **Open Anyway**. On macOS 15 the old right-click → Open shortcut no longer works.
+
+You are trusting this project rather than Apple's review here. The whole source is in
+this repository, it contains no networking code at all, and you can build it yourself.
+
+Then a speaker icon appears in the menu bar — that is the whole app. Press ⌘⇧V to open
+the panel.
 
 **Requires macOS 15 (Sequoia) or later**, on Apple Silicon or Intel.
 

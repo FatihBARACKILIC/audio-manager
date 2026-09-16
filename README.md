@@ -67,8 +67,15 @@ brew tap fatihbarackilic/audio-manager https://github.com/FatihBARACKILIC/audio-
 brew install --cask audio-manager
 ```
 
-Homebrew downloads the app, checks Apple's signature on it, and puts
-**AudioManager.app** in your Applications folder.
+Homebrew puts **AudioManager.app** in your Applications folder.
+
+**5. Allow it to open.** macOS quarantines anything downloaded, and Audio Manager is not
+notarised — see [Why macOS blocks it the first time](#why-macos-blocks-it-the-first-time)
+just below. One command clears it:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/AudioManager.app
+```
 
 **To update later**, run:
 
@@ -92,23 +99,53 @@ double-click the file in your Downloads folder afterwards.
 **3. Drag `AudioManager.app` into your Applications folder.** Open a Finder window,
 press <kbd>⌘</kbd><kbd>⇧</kbd><kbd>A</kbd> to get to Applications, and drop it in.
 
-**4. Double-click it to open.** The app is signed and notarised by Apple, so it opens
-normally — no right-click-to-open workaround and no security warning to dismiss. If macOS
-does complain, the download was incomplete; delete it and fetch it again.
+**4. Allow it to open.** macOS will block it the first time — see
+[Why macOS blocks it the first time](#why-macos-blocks-it-the-first-time) just below for
+what to click.
 
 **To update later**, come back to the same page, download the new version, and drag it
 into Applications over the old one, choosing **Replace**. Quit Audio Manager from the
-panel first. Your profiles, schedule rules and preferences are stored separately from the
-app, so replacing it keeps all of them.
+panel first, and clear the quarantine again afterwards — every fresh download gets it.
+Your profiles, schedule rules and preferences are stored separately from the app, so
+replacing it keeps all of them.
 
 This is the route Homebrew saves you from repeating — if updating by hand sounds
 tedious, it is worth the one-time setup above.
 
+### Why macOS blocks it the first time
+
+Opening Audio Manager the first time gets you a warning that macOS "could not verify"
+it, or that it is "damaged". Nothing is wrong with the download. Apple charges $99 a
+year for the Developer Program, and only members can notarise an app — the step that
+makes macOS open it without complaint. This is a free, open-source project without that
+membership, so the app is signed only well enough to run, and you have to allow it once
+yourself.
+
+**The one-command way**, if you have a terminal open anyway:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/AudioManager.app
+```
+
+**Or through System Settings:**
+
+1. Double-click Audio Manager. macOS blocks it — click **Done**.
+2. Open **System Settings → Privacy & Security**.
+3. Scroll down to the message about AudioManager and click **Open Anyway**.
+4. Confirm. From now on it opens normally.
+
+On macOS 15 the old right-click → **Open** shortcut no longer works, which is why the
+steps go through System Settings instead.
+
+You are trusting this project rather than Apple's review here, which is a fair thing to
+weigh. The whole source is in this repository, there is no networking code in it at all,
+and you can build it yourself with the instructions in
+[docs/DEVELOPING.md](docs/DEVELOPING.md).
+
 ### The first launch
 
-Open Audio Manager once from Applications. A speaker icon appears in the menu bar at the
-top right of your screen — **that is the whole app**. There is no Dock icon and no window
-until you open one.
+Once it opens, a speaker icon appears in the menu bar at the top right of your screen —
+**that is the whole app**. There is no Dock icon and no window until you open one.
 
 If you want it to come back every time you log in, turn on **Open at login** in Settings.
 

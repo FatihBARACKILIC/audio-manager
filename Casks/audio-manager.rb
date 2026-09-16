@@ -28,6 +28,16 @@ cask "audio-manager" do
 
   caveats do
     <<~EOS
+      Audio Manager is ad-hoc signed, not notarised: notarising needs a paid Apple
+      Developer membership this project does not have. macOS will refuse to open it
+      until you allow it once, either by running
+
+        xattr -dr com.apple.quarantine "#{appdir}/AudioManager.app"
+
+      or by opening it, letting macOS block it, then going to System Settings ->
+      Privacy & Security and clicking "Open Anyway". On macOS 15 the old
+      right-click -> Open shortcut no longer works.
+
       Audio Manager runs in the menu bar and has no Dock icon.
 
       The first time you mute or adjust an app, macOS asks for permission to record

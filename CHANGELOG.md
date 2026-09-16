@@ -44,6 +44,9 @@ First release. A menu bar app that gives every running app its own volume.
 ### Notes
 
 - Requires macOS 15 (Sequoia) or later, on Apple Silicon or Intel.
+- Released ad-hoc signed but **not notarised**: notarising needs a paid Apple Developer
+  membership this project does not have. macOS blocks the app until you allow it once —
+  the README explains both ways to do that.
 - Built on Core Audio process taps. The first time you mute or adjust an app, macOS asks
   for permission to record system audio: that is the only supported way to control
   another app's volume, and there is no narrower permission to ask for. Audio is

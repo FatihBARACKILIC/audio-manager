@@ -1,7 +1,14 @@
 name: Release
 
-# Tag a version and this builds, signs, notarises and publishes the app, then points
-# the Homebrew cask at the new download. Nothing here runs on an ordinary push.
+# Tag a version and this builds, packages and publishes the app, then points the
+# Homebrew cask at the new download. Nothing here runs on an ordinary push.
+#
+# The app is ad-hoc signed, not signed with a Developer ID and not notarised: that
+# needs a paid Apple Developer Program membership, which this project does not have.
+# Ad-hoc is not a formality — arm64 binaries must carry a signature to run at all, and
+# it is what embeds the sandbox and audio-input entitlements the app cannot work
+# without. What it does not do is satisfy Gatekeeper, so anyone who downloads a release
+# has to allow the app once by hand. The README explains that to them.
 on:
   push:
     tags: ["v*"]
@@ -36,34 +43,7 @@ jobs:
         working-directory: Packages/AudioManagerKit
         run: swift test --parallel
 
-      # A Developer ID identity is what lets the app open on someone else's Mac without
-      # Gatekeeper refusing it. Without these secrets the build still runs, but produces
-      # an unsigned app that is not fit to publish.
-      - name: Import the signing certificate
-        env:
-          CERTIFICATE_P12: ${{ secrets.DEVELOPER_ID_CERTIFICATE_P12 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
-        run: |
-          if [ -z "$CERTIFICATE_P12" ]; then
-            echo "::error::DEVELOPER_ID_CERTIFICATE_P12 is not set — see README, Releasing."
-            exit 1
-          fi
-          keychain="$RUNNER_TEMP/build.keychain"
-          password="$(uuidgen)"
-          security create-keychain -p "$password" "$keychain"
-          security set-keychain-settings -lut 21600 "$keychain"
-          security unlock-keychain -p "$password" "$keychain"
-          echo "$CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
-          security import "$RUNNER_TEMP/certificate.p12" -k "$keychain" \
-            -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: \
-            -s -k "$password" "$keychain" > /dev/null
-          security list-keychain -d user -s "$keychain" login.keychain-db
-          rm "$RUNNER_TEMP/certificate.p12"
-
       - name: Build
-        env:
-          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           xcodebuild build \
             -project AudioManager.xcodeproj \
@@ -73,26 +53,37 @@ jobs:
             -derivedDataPath build \
             MARKETING_VERSION="${{ steps.version.outputs.version }}" \
             CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Developer ID Application" \
-            DEVELOPMENT_TEAM="$TEAM_ID" \
-            OTHER_CODE_SIGN_FLAGS="--timestamp" \
+            CODE_SIGN_IDENTITY="-" \
+            DEVELOPMENT_TEAM="" \
             -quiet
 
-      - name: Notarise and staple
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_APP_PASSWORD }}
-          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      # Xcode treats an ad-hoc identity as a development build and injects
+      # get-task-allow, which lets any process running as the same user attach a
+      # debugger and defeats the hardened runtime. Re-signing with the generated
+      # entitlements minus that one keeps the sandbox and the audio entitlement — which
+      # the app genuinely needs — and drops the one that should never ship.
+      - name: Drop the debug entitlement
         run: |
           app="build/Build/Products/Release/AudioManager.app"
-          ditto -c -k --keepParent "$app" "$RUNNER_TEMP/notarize.zip"
-          xcrun notarytool submit "$RUNNER_TEMP/notarize.zip" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_ID_PASSWORD" \
-            --team-id "$TEAM_ID" \
-            --wait
-          # Stapling lets the app launch on a Mac that is offline the first time.
-          xcrun stapler staple "$app"
+          entitlements="$RUNNER_TEMP/entitlements.plist"
+          codesign -d --entitlements "$entitlements" --xml "$app"
+          plutil -convert xml1 "$entitlements"
+          /usr/libexec/PlistBuddy -c \
+            "Delete :com.apple.security.get-task-allow" "$entitlements" || true
+          codesign --force --sign - --entitlements "$entitlements" --options runtime "$app"
+
+          echo "Entitlements the published app carries:"
+          codesign -d --entitlements - --xml "$app" | plutil -convert xml1 -o - -
+          codesign --verify --strict --verbose=2 "$app"
+
+          # The app must not ship with the debug entitlement, so fail rather than
+          # publish one that does.
+          if codesign -d --entitlements - --xml "$app" \
+              | plutil -convert xml1 -o - - \
+              | grep -q "get-task-allow"; then
+            echo "::error::get-task-allow is still present — refusing to publish."
+            exit 1
+          fi
 
       - name: Package
         id: package
@@ -103,14 +94,22 @@ jobs:
           echo "archive=$archive" >> "$GITHUB_OUTPUT"
           echo "sha256=$(shasum -a 256 "$archive" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
+      # Release notes live in the repo so the published release and the changelog cannot
+      # drift apart. A version without a notes file falls back to generated ones.
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           version="${{ steps.version.outputs.version }}"
+          notes="docs/release-notes-v$version.md"
+          if [ -f "$notes" ]; then
+            notes_flag=(--notes-file "$notes")
+          else
+            notes_flag=(--generate-notes)
+          fi
           gh release create "v$version" "${{ steps.package.outputs.archive }}" \
             --title "Audio Manager $version" \
-            --generate-notes || \
+            "${notes_flag[@]}" || \
           gh release upload "v$version" "${{ steps.package.outputs.archive }}" --clobber
 
       # The cask lives in this repo, so a release is only finished once it points at the
