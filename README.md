@@ -78,8 +78,9 @@ Apps that are making sound right now are listed first.
 
 **Each row** has a volume slider and a mute button. Click the chevron on the right for
 that app's advanced controls. The slider takes effect as you drag it, and the dots under
-it mark every 20% — the slider settles onto one when you get close, but any value in
-between is still yours to pick.
+it mark every 20%: click one to jump straight to it, or drag past and the slider settles
+onto it when you get close. Any value in between is still yours to pick, and the dot you
+are sitting on is filled in.
 
 **Two modes per app**, chosen in the advanced controls:
 
