@@ -2,6 +2,7 @@ import AppKit
 import AudioDomain
 import Darwin
 import Foundation
+import Synchronization
 
 /// Snapshot of the running applications, built once per refresh.
 ///
@@ -93,11 +94,70 @@ public enum ProcessIdentity {
     ///
     /// Sandboxed apps can be refused here; every caller has a fallback, so a `nil` only
     /// costs us a nicer display name.
+    ///
+    /// The path buffer is stack scratch rather than an `Array`: this runs once per audio
+    /// process on every refresh, and a kilobyte of heap per process per refresh is pure
+    /// churn for a value that never outlives the call.
     public static func executablePath(forProcessID pid: pid_t) -> String? {
-        var buffer = [UInt8](repeating: 0, count: Int(MAXPATHLEN))
-        let length = proc_pidpath(pid, &buffer, UInt32(buffer.count))
-        guard length > 0 else { return nil }
-        return String(decoding: buffer[0..<Int(length)], as: UTF8.self)
+        withUnsafeTemporaryAllocation(of: UInt8.self, capacity: Int(MAXPATHLEN)) { buffer in
+            guard let base = buffer.baseAddress else { return nil }
+            let length = proc_pidpath(pid, base, UInt32(buffer.count))
+            guard length > 0 else { return nil }
+            return String(decoding: UnsafeBufferPointer(start: base, count: Int(length)), as: UTF8.self)
+        }
+    }
+
+    /// What one `.app` bundle on disk says about itself.
+    ///
+    /// Reading it means opening the bundle and parsing its `Info.plist`, which is disk
+    /// work we would otherwise repeat for every Chrome helper on every refresh — and a
+    /// refresh happens every time any app starts or stops making a sound. The answer
+    /// only changes when the app on disk is replaced, so it is cached by path.
+    private struct BundleDescription: Sendable {
+        var identifier: String?
+        var name: String?
+    }
+
+    /// Bounded so a long session cannot grow it: far more than the number of distinct
+    /// app bundles a Mac plays audio from, and dropped wholesale rather than tracked
+    /// with an eviction order that would cost more than the entries do.
+    private static let bundleCacheLimit = 64
+    private static let bundleCache = Mutex<[String: BundleDescription]>([:])
+
+    private static func description(forBundlePath path: String) -> BundleDescription {
+        if let cached = bundleCache.withLock({ $0[path] }) {
+            return cached
+        }
+
+        let bundle = Bundle(path: path)
+        let description = BundleDescription(
+            identifier: bundle?.bundleIdentifier,
+            name: bundle?.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+                ?? bundle?.object(forInfoDictionaryKey: "CFBundleName") as? String
+        )
+
+        bundleCache.withLock { cache in
+            if cache.count >= bundleCacheLimit {
+                cache.removeAll(keepingCapacity: true)
+            }
+            cache[path] = description
+        }
+        return description
+    }
+
+    /// Forgets what bundles on disk said about themselves.
+    ///
+    /// Nothing in the app calls this: an app being replaced underneath us would only
+    /// cost a stale display name until the next launch. It exists so the cache can be
+    /// emptied between tests, which otherwise share it.
+    static func forgetCachedBundles() {
+        bundleCache.withLock { $0.removeAll() }
+    }
+
+    /// The name a bundle reports, reading it if this is the first time we have asked.
+    /// Test hook for the cache; the app reaches this through `describe`.
+    static func displayNameForCachedBundle(atPath path: String) -> String? {
+        description(forBundlePath: path).name
     }
 
     /// Everything we can find out about one audio process.
@@ -122,12 +182,11 @@ public enum ProcessIdentity {
             let executable = executablePath(forProcessID: processID),
             let bundlePath = outermostAppBundlePath(forExecutablePath: executable)
         {
-            let bundle = Bundle(path: bundlePath)
-            let identifier = bundle?.bundleIdentifier ?? coreAudioBundleIdentifier
+            let bundle = description(forBundlePath: bundlePath)
+            let identifier = bundle.identifier ?? coreAudioBundleIdentifier
             let parent = index.info(forBundleIdentifier: identifier)
             let name = parent?.name
-                ?? bundle?.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
-                ?? bundle?.object(forInfoDictionaryKey: "CFBundleName") as? String
+                ?? bundle.name
                 ?? (bundlePath as NSString).lastPathComponent.replacingOccurrences(of: ".app", with: "")
 
             return Description(

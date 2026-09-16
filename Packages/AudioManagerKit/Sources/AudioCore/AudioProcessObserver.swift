@@ -17,7 +17,21 @@ public final class AudioProcessObserver: AudioProcessObserving, @unchecked Senda
         /// Audio objects we currently hold a per-process listener on.
         var observedProcesses: Set<AudioObjectID> = []
         var isStarted = false
+        /// Bumped by every request to re-read; a scheduled read that is no longer the
+        /// newest request drops itself instead of doing the work twice.
+        var refreshGeneration = 0
     }
+
+    /// How long a burst of notifications is allowed to gather before we re-read.
+    ///
+    /// Core Audio tells us about the process list and about each process starting or
+    /// stopping output, and those arrive together: opening three browser tabs fires a
+    /// handful of callbacks inside a few milliseconds, and each one would otherwise
+    /// cost a full workspace snapshot plus a path lookup per audio process. Waiting a
+    /// moment turns that burst into one read. This is not a timer — nothing is
+    /// scheduled unless the system just told us something changed — so an idle app
+    /// still wakes up zero times.
+    private static let coalescingInterval = DispatchTimeInterval.milliseconds(120)
 
     private let state = Mutex(State())
     private let queue = DispatchQueue(label: "com.barackilic.AudioManager.process-observer", qos: .utility)
@@ -64,7 +78,7 @@ public final class AudioProcessObserver: AudioProcessObserving, @unchecked Senda
         guard shouldStart else { return }
 
         let listener = ListenerBox { [weak self] _, _ in
-            self?.refresh()
+            self?.scheduleRefresh()
         }
         listListener.withLock { $0 = listener }
 
@@ -89,7 +103,12 @@ public final class AudioProcessObserver: AudioProcessObserving, @unchecked Senda
     /// Removes every listener. Safe to call when not started.
     public func stop() {
         let wasStarted = state.withLock { state -> Bool in
-            defer { state.isStarted = false }
+            defer {
+                state.isStarted = false
+                // Outdates any read already queued, so a listener that fired just
+                // before we stopped cannot re-add listeners behind our back.
+                state.refreshGeneration += 1
+            }
             return state.isStarted
         }
         guard wasStarted else { return }
@@ -132,6 +151,21 @@ public final class AudioProcessObserver: AudioProcessObserving, @unchecked Senda
     }
 
     // MARK: - Reading
+
+    /// Asks for a re-read, collapsing a burst of notifications into one.
+    private func scheduleRefresh() {
+        let generation = state.withLock { state -> Int in
+            state.refreshGeneration += 1
+            return state.refreshGeneration
+        }
+
+        queue.asyncAfter(deadline: .now() + AudioProcessObserver.coalescingInterval) { [weak self] in
+            guard let self else { return }
+            let isNewest = state.withLock { $0.refreshGeneration == generation && $0.isStarted }
+            guard isNewest else { return }
+            refresh()
+        }
+    }
 
     /// Re-reads the process list, re-syncs per-process listeners and publishes.
     private func refresh() {
@@ -203,7 +237,7 @@ public final class AudioProcessObserver: AudioProcessObserving, @unchecked Senda
 
         for objectID in current.subtracting(previous) {
             let listener = ListenerBox { [weak self] _, _ in
-                self?.refresh()
+                self?.scheduleRefresh()
             }
             let status = AudioObjectAddPropertyListenerBlock(objectID, &address, queue, listener.block)
             if status == noErr {
