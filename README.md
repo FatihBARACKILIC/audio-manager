@@ -11,6 +11,9 @@ work.
 
 It lives in the menu bar, has no Dock icon, and does nothing at all until you ask it to.
 
+**Requires macOS 15 (Sequoia) or later.** Works on both Apple Silicon and Intel Macs.
+Available in English and Turkish.
+
 ---
 
 ## What you can do with it
@@ -26,27 +29,71 @@ It lives in the menu bar, has no Dock icon, and does nothing at all until you as
 | **Schedules** | Mute Slack automatically on weekdays from 09:00, or switch profiles every evening. |
 | **Hearing safety** | A volume ceiling that applies after every boost, so nothing can surprise you. |
 
-Everything is in English and Turkish.
-
 ---
 
-## Install
+## Installing
 
-With [Homebrew](https://brew.sh):
+There are two ways. Homebrew is the one to pick if you plan to keep the app updated;
+the manual download is fine if you would rather not touch a terminal.
+
+### With Homebrew (recommended)
+
+[Homebrew](https://brew.sh) is a package manager for the Mac — one command installs an
+app, another updates it, another removes it cleanly. If you already use it, skip to the
+two commands below.
+
+**1. Open Terminal.** Press <kbd>⌘</kbd><kbd>Space</kbd>, type `Terminal`, press Return.
+
+**2. Install Homebrew, if you do not have it yet.** Paste this in and press Return, then
+follow what it prints — it will ask for your password and may take a few minutes:
+
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+If you are not sure whether you already have it, run `brew --version` first. If that
+prints a version number, you are set.
+
+**3. Tell Homebrew where Audio Manager lives.** The app is not in Homebrew's main
+catalogue, so you point Homebrew at this repository once. That is what a "tap" is:
 
 ```sh
 brew tap fatihbarackilic/audio-manager https://github.com/FatihBARACKILIC/audio-manager
+```
+
+**4. Install it:**
+
+```sh
 brew install --cask audio-manager
 ```
 
-Or download `AudioManager-<version>.zip` from the
+Homebrew downloads the app, checks Apple's signature on it, and puts
+**AudioManager.app** in your Applications folder.
+
+**To update later**, run:
+
+```sh
+brew upgrade --cask audio-manager
+```
+
+You can also update everything you installed with Homebrew at once with `brew upgrade`.
+
+### By hand
+
+Download `AudioManager-<version>.zip` from the
 [latest release](https://github.com/FatihBARACKILIC/audio-manager/releases/latest),
 unzip it, and drag **AudioManager.app** into your Applications folder.
 
-Either way, open it once from Applications. A speaker icon appears in the menu bar —
-that is the whole app. There is no Dock icon and no window until you open one.
+The app is signed and notarised by Apple, so it opens normally — no right-click-to-open
+workaround and no security warning to dismiss.
 
-**Requires macOS 15 (Sequoia) or later**, on Apple Silicon or Intel.
+### The first launch
+
+Open Audio Manager once from Applications. A speaker icon appears in the menu bar at the
+top right of your screen — **that is the whole app**. There is no Dock icon and no window
+until you open one.
+
+If you want it to come back every time you log in, turn on **Open at login** in Settings.
 
 ---
 
@@ -75,16 +122,21 @@ If you say no, the app keeps running and tells you how to grant the permission l
 
 ## Using it
 
-Click the menu bar icon, or press **⌘⇧V**, and the panel opens with every running app.
-Apps that are making sound right now are listed first.
+Click the menu bar icon, or press <kbd>⌘</kbd><kbd>⇧</kbd><kbd>V</kbd>, and the panel
+opens with every running app. Apps that are making sound right now are listed first.
 
-**Each row** has a volume slider and a mute button. Click the chevron on the right for
-that app's advanced controls. The slider takes effect as you drag it, and the dots under
-it mark every 20%: click one to jump straight to it, or drag past and the slider settles
-onto it when you get close. Any value in between is still yours to pick, and the dot you
-are sitting on is filled in.
+### One row per app
 
-**Two modes per app**, chosen in the advanced controls:
+Each row has a volume slider and a mute button. Click the chevron on the right for that
+app's advanced controls.
+
+The slider takes effect as you drag it, and the dots under it mark every 20%: click one
+to jump straight to it, or drag past and the slider settles onto it when you get close.
+Any value in between is still yours to pick, and the dot you are sitting on is filled in.
+
+### Two modes per app
+
+In the advanced controls you choose how much of an app Audio Manager takes over:
 
 - **Mute only** *(the default)* — the app can be silenced, and nothing else. Its audio is
   never processed, so there is no delay of any kind.
@@ -95,24 +147,33 @@ are sitting on is filled in.
 Moving an app's volume slider switches it to full control for you, since a volume that
 does nothing would be worse than a mode change.
 
-**Focus mode** silences everything except the apps you tick as allowed. Give it a
-keyboard shortcut in Settings and you can quiet the machine in one keystroke.
+### Focus mode
 
-**Profiles** capture the current setup under a name. Set your apps up the way you want
-them, then Settings → Profiles → type a name → **+**. Switch between profiles from the
-menu at the bottom of the panel: "Work" mutes Slack and Mail while your editor stays
-audible, "Music" brings it all back.
+Focus mode silences everything except the apps you tick as allowed — useful when you want
+one call, or one playlist, and nothing else. Give it a keyboard shortcut in Settings and
+you can quiet the machine in one keystroke.
+
+### Profiles
+
+A profile captures your current setup under a name. Set your apps up the way you want
+them, then **Settings → Profiles**, type a name, press **+**.
+
+Switch between profiles from the menu at the bottom of the panel: "Work" mutes Slack and
+Mail while your editor stays audible, "Music" brings it all back.
 
 To change a profile later, activate it, adjust whatever you like in the panel, then press
 **Update from current setup** in Settings → Profiles. There is no separate editor for
 every setting, because the panel already is one.
 
-**Schedules** apply a rule inside a time window — mute a set of apps, turn on focus mode,
-or activate a profile — on the weekdays you choose. Rules that cross midnight and days
-that change length work correctly.
+### Schedules
 
-Settings (from the panel's gear) also cover launching at login, notifications, the
-volume ceiling, and both keyboard shortcuts.
+A schedule rule applies inside a time window, on the weekdays you choose. It can mute a
+set of apps, turn on focus mode, or activate a profile — "mute Slack on weekdays from
+09:00 to 12:30", for instance. Rules that cross midnight and days that change length
+work correctly.
+
+Settings, reached from the gear in the panel, also covers launching at login,
+notifications, the volume ceiling, and both keyboard shortcuts.
 
 ---
 
@@ -126,10 +187,10 @@ keep playing rather than telling us anything is wrong.
 protected content is the usual case. Audio Manager will say so for that app rather than
 pretending to work.
 
-**An app you expected is missing from the list.** The panel shows apps that appear in
-the Dock, plus anything currently making sound. Background helpers only appear while they
-are playing, and Chrome, Brave, VS Code and other Electron apps are shown as one row
-rather than one per helper process.
+**An app you expected is missing from the list.** The panel shows apps that appear in the
+Dock, plus anything currently making sound. Background helpers only appear while they are
+playing, and Chrome, Brave, VS Code and other Electron apps are shown as one row rather
+than one per helper process.
 
 **The menu bar icon is gone.** macOS hides menu bar items when the bar runs out of room,
 usually on a laptop with lots of icons and a notch. Try quitting another menu bar app.
@@ -144,28 +205,44 @@ usually on a laptop with lots of icons and a notch. Try quitting another menu ba
 
 ## Keeping your settings
 
-Settings → General → **Export** writes your profiles, schedule rules and preferences to
-a `.json` file you choose. **Import** reads one back, after reinstalling or on another
-Mac. The file is plain, readable JSON carrying its own schema version, so an export made
-today still imports into a later version of the app.
+**Settings → General → Export** writes your profiles, schedule rules and preferences to a
+`.json` file you choose — worth doing before reinstalling macOS or moving to a new Mac.
+**Import** reads one back.
 
-Import replaces your current settings rather than merging them, and asks first. A file
-that is not an Audio Manager export is refused with a message instead of being applied.
+The file is plain, readable JSON carrying its own version, so an export made today still
+imports into a later version of the app. Import replaces your current settings rather
+than merging them, and asks before it does. A file that is not an Audio Manager export is
+refused with a message instead of being applied.
+
+---
 
 ## Uninstalling
 
-Settings → General → **Remove Audio Manager**. It deletes your profiles, schedule rules
+**Settings → General → Remove Audio Manager.** It deletes your profiles, schedule rules
 and preferences, unmutes every app, turns off Open at login, quits, and shows itself in
 Finder so you can drag it to the Trash.
 
-That last step is yours because macOS does not let a sandboxed app delete its own bundle
-— both `FileManager.trashItem` and `NSWorkspace.recycle` are refused.
+That last step is yours because macOS does not let a sandboxed app delete its own bundle.
 
-If you installed with Homebrew, use that instead so it does not leave a dangling record:
+**If you installed with Homebrew**, use Homebrew instead, so it does not leave a dangling
+record of an app that is no longer there:
 
 ```sh
 brew uninstall --zap --cask audio-manager
 ```
+
+`--zap` is what also removes your saved settings. Leave it off if you plan to reinstall
+and want your profiles back.
+
+---
+
+## Privacy
+
+No audio is recorded, stored or transmitted. No file is ever written except your own
+settings, in `~/Library/Application Support/com.barackilic.AudioManager/`. The app
+contains no networking code, so it cannot phone home even by accident.
+
+---
 
 ## What it costs to run
 
@@ -184,99 +261,14 @@ not otherwise.
 
 ---
 
-## Privacy
+## Built with Apple frameworks only
 
-No audio is recorded, stored or transmitted. No file is ever written except your own
-settings, in `~/Library/Application Support/com.barackilic.AudioManager/`. The app
-contains no networking code, so it cannot phone home even by accident.
+Swift 6, no third-party dependencies, no audio driver, no private APIs. It uses **Core
+Audio process taps**, the supported API for capturing another process's output.
 
----
-
-## For developers
-
-Built with Swift 6 and Apple frameworks only — no third-party dependencies, no audio
-driver, no private APIs. It uses **Core Audio process taps**, the supported API for
-capturing another process's output, introduced in macOS 14.2.
-
-```sh
-git clone https://github.com/FatihBARACKILIC/audio-manager.git
-cd audio-manager
-xcodebuild -project AudioManager.xcodeproj -scheme AudioManager -configuration Release build
-
-cd Packages/AudioManagerKit && swift test
-```
-
-### Architecture
-
-```
-AudioManager (app: AppKit shell + SwiftUI views)
-        │
-        ▼
-AudioDomain  ◄──── AudioPersistence
-        ▲
-        │  implements the protocols AudioDomain declares
-        │
-   AudioCore  (Core Audio taps, aggregate device, DSP)
-```
-
-- **`AudioDomain`** — pure Swift: app grouping, volume curve, profiles, schedule engine,
-  policy resolution. No Core Audio, no SwiftUI, fully unit tested.
-- **`AudioCore`** — the only place Core Audio lives: tap lifecycle, one shared aggregate
-  device, the real-time render graph and the equalizer.
-- **`AudioPersistence`** — versioned JSON in Application Support, written atomically.
-- **App target** — menu bar item, panel and settings. The shell is AppKit so a global
-  shortcut can open the panel, which `MenuBarExtra` cannot do; every view is SwiftUI.
-
-The rules the code is held to are in [AGENTS.md](AGENTS.md).
-
-### Notes on how it works
-
-- Chromium and Electron apps play audio from short-lived helper processes. Every process
-  is attributed to the outermost `.app` bundle containing it, so a browser is one row.
-- A process tap silences its process only while something is actively **reading** the
-  tap. Muting is therefore "render this app as silence": its tap joins the same shared
-  aggregate device as everything else, and the render callback drops the stream before
-  touching a sample. A tap that nobody reads mutes nothing.
-- Every tap is created with `CATapMutedWhenTapped`, so if the render graph ever stops the
-  user's audio comes back by itself rather than going missing.
-- One aggregate device and one IOProc serve every controlled app, and both are destroyed
-  the moment the last app is released.
-
-### Diagnostics
-
-These flags report what the app sees and decides. None of them change stored settings:
-
-```sh
-AudioManager.app/Contents/MacOS/AudioManager --dump-state
-AudioManager.app/Contents/MacOS/AudioManager --dump-state --simulate-control --watch 10
-AudioManager.app/Contents/MacOS/AudioManager --dump-state --simulate-mute --watch 10
-AudioManager.app/Contents/MacOS/AudioManager --reset-settings
-AudioManager.app/Contents/MacOS/AudioManager --show-panel
-```
-
-`--dump-state` prints the grouped app list and why each app ended up in the state it is
-in. `--simulate-control` additionally routes every app through the processing path for
-the run, and `--simulate-mute` mutes every app for the run — the quickest way to tell a
-permission problem apart from a bug.
-
-Run the app with `open -a` rather than launching the binary directly: macOS attributes
-the audio permission to whichever process started it, so running it straight from a
-terminal asks Terminal's permission instead of the app's.
-
-### Entitlements
-
-The app is sandboxed and asks for exactly two things: `device.audio-input`, which is
-what process taps require, and `files.user-selected.read-write`, which is what lets the
-export and import panels read and write the file the user picks. Nothing else.
-
-### Releasing
-
-Pushing a `v*` tag runs [`.github/workflows/release.yml`](.github/workflows/release.yml),
-which tests, builds, signs, notarises and publishes the zip, then points
-[`Casks/audio-manager.rb`](Casks/audio-manager.rb) at it. It needs five repository
-secrets: `DEVELOPER_ID_CERTIFICATE_P12` (base64 of a Developer ID Application `.p12`),
-`DEVELOPER_ID_CERTIFICATE_PASSWORD`, `APPLE_ID`, `APPLE_ID_APP_PASSWORD` (an
-app-specific password) and `APPLE_TEAM_ID`.
+If you want to build it, read the code, or contribute, see
+**[docs/DEVELOPING.md](docs/DEVELOPING.md)**. The rules the code is held to are in
+[AGENTS.md](AGENTS.md).
 
 ## License
 
