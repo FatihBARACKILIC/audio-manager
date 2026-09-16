@@ -474,6 +474,17 @@
         }
       }
     },
+    "Export…": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dışa Aktar…"
+          }
+        }
+      }
+    },
     "Flat": {
       "extractionState": "manual",
       "localizations": {
@@ -602,6 +613,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "İşitme sağlığı"
+          }
+        }
+      }
+    },
+    "Import…": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İçe Aktar…"
           }
         }
       }
@@ -980,6 +1002,28 @@
         }
       }
     },
+    "Replace": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Değiştir"
+          }
+        }
+      }
+    },
+    "Replace your settings?": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayarların değiştirilsin mi?"
+          }
+        }
+      }
+    },
     "Reset": {
       "extractionState": "manual",
       "localizations": {
@@ -998,6 +1042,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mevcut düzeni profil olarak kaydet"
+          }
+        }
+      }
+    },
+    "Saves your profiles, schedule rules and preferences to a file you keep. Import it after reinstalling, or on another Mac, to get everything back.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profillerini, zamanlama kurallarını ve tercihlerini saklayacağın bir dosyaya kaydeder. Yeniden kurduktan sonra ya da başka bir Mac'te içe aktarıp her şeyi geri alabilirsin."
           }
         }
       }
@@ -1112,6 +1167,28 @@
         }
       }
     },
+    "Settings imported.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayarlar içe aktarıldı."
+          }
+        }
+      }
+    },
+    "Settings saved to %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayarlar %@ dosyasına kaydedildi."
+          }
+        }
+      }
+    },
     "Shortcuts": {
       "extractionState": "manual",
       "localizations": {
@@ -1141,6 +1218,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Durum"
+          }
+        }
+      }
+    },
+    "That file could not be read.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu dosya okunamadı."
+          }
+        }
+      }
+    },
+    "That file was saved by a newer version of Audio Manager. Your settings have not been changed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu dosya Audio Manager'ın daha yeni bir sürümüyle kaydedilmiş. Ayarların değiştirilmedi."
+          }
+        }
+      }
+    },
+    "That is not an Audio Manager settings file. Choose the one you exported.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu bir Audio Manager ayar dosyası değil. Dışa aktardığın dosyayı seç."
           }
         }
       }
@@ -1332,24 +1442,46 @@
         }
       }
     },
-    "Your profiles, schedule rules and preferences will be deleted and every app will be unmuted. This cannot be undone.\n\nAudio Manager was installed with Homebrew, so finish with: brew uninstall --zap --cask audio-manager": {
+    "Your current profiles, schedule rules and preferences will be replaced by the ones in that file.": {
       "extractionState": "manual",
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Profillerin, zamanlama kuralların ve tercihlerin silinecek, bütün uygulamaların sesi geri açılacak. Bu işlem geri alınamaz.\n\nAudio Manager Homebrew ile kurulmuş, bu yüzden şununla tamamla: brew uninstall --zap --cask audio-manager"
+            "value": "Şu anki profillerin, zamanlama kuralların ve tercihlerin o dosyadakilerle değiştirilecek."
           }
         }
       }
     },
-    "Your profiles, schedule rules and preferences will be deleted and every app will be unmuted. This cannot be undone.\n\nAudio Manager will then quit and show itself in Finder, so you can drag it to the Trash.": {
+    "Your profiles, schedule rules and preferences will be deleted and every app will be unmuted. If you want to keep them, cancel and use Export first.\n\nAudio Manager was installed with Homebrew, so finish with: brew uninstall --zap --cask audio-manager": {
       "extractionState": "manual",
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Profillerin, zamanlama kuralların ve tercihlerin silinecek, bütün uygulamaların sesi geri açılacak. Bu işlem geri alınamaz.\n\nArdından Audio Manager kapanacak ve kendini Finder'da gösterecek; Çöp Sepeti'ne sürükleyebilirsin."
+            "value": "Profillerin, zamanlama kuralların ve tercihlerin silinecek, bütün uygulamaların sesi geri açılacak. Saklamak istiyorsan vazgeç ve önce Dışa Aktar'ı kullan.\n\nAudio Manager Homebrew ile kurulmuş, bu yüzden şununla tamamla: brew uninstall --zap --cask audio-manager"
+          }
+        }
+      }
+    },
+    "Your profiles, schedule rules and preferences will be deleted and every app will be unmuted. If you want to keep them, cancel and use Export first.\n\nAudio Manager will then quit and show itself in Finder, so you can drag it to the Trash.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profillerin, zamanlama kuralların ve tercihlerin silinecek, bütün uygulamaların sesi geri açılacak. Saklamak istiyorsan vazgeç ve önce Dışa Aktar'ı kullan.\n\nArdından Audio Manager kapanacak ve kendini Finder'da gösterecek; Çöp Sepeti'ne sürükleyebilirsin."
+          }
+        }
+      }
+    },
+    "Your settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayarların"
           }
         }
       }
@@ -1372,6 +1504,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ayarların okunamadı ve sıfırlandı."
+          }
+        }
+      }
+    },
+    "Your settings could not be saved to that location.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayarların o konuma kaydedilemedi."
           }
         }
       }

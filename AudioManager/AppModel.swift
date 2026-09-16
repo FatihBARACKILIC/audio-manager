@@ -624,10 +624,9 @@ final class AppModel {
         }
     }
 
-    private func persist() async {
-        guard !isPersistenceSuspended else { return }
-
-        let state = PersistedState(
+    /// Everything worth remembering, in the shape both the store and an export use.
+    var currentPersistedState: PersistedState {
+        PersistedState(
             appSettings: appSettings,
             profiles: profiles,
             activeProfileID: activeProfileID,
@@ -636,6 +635,34 @@ final class AppModel {
             outputLimit: outputLimit,
             preferences: preferences
         )
-        try? await store.save(state)
+    }
+
+    /// Replaces every setting with an imported document.
+    ///
+    /// A replacement, not a merge: the user asked for the settings in that file, and
+    /// half-merging two setups would produce something neither of them expected. The
+    /// login item is synchronised rather than trusted, so the toggle in Settings keeps
+    /// telling the truth about what the system actually has registered.
+    func replaceSettings(with state: PersistedState) async {
+        appSettings = state.appSettings
+        profiles = state.profiles
+        activeProfileID = state.activeProfileID
+        scheduleRules = state.scheduleRules
+        focus = state.focus
+        outputLimit = state.outputLimit
+        preferences = state.preferences
+        preferences.launchAtLogin = LoginItem.synchronize(enabled: state.preferences.launchAtLogin)
+
+        recomputeSchedule()
+        scheduleNextScheduleWakeUp()
+        AppCommands.shortcutsChanged()
+
+        await persist()
+        await applyNow()
+    }
+
+    private func persist() async {
+        guard !isPersistenceSuspended else { return }
+        try? await store.save(currentPersistedState)
     }
 }

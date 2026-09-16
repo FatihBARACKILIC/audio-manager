@@ -140,6 +140,16 @@ usually on a laptop with lots of icons and a notch. Try quitting another menu ba
 
 ---
 
+## Keeping your settings
+
+Settings → General → **Export** writes your profiles, schedule rules and preferences to
+a `.json` file you choose. **Import** reads one back, after reinstalling or on another
+Mac. The file is plain, readable JSON carrying its own schema version, so an export made
+today still imports into a later version of the app.
+
+Import replaces your current settings rather than merging them, and asks first. A file
+that is not an Audio Manager export is refused with a message instead of being applied.
+
 ## Uninstalling
 
 Settings → General → **Remove Audio Manager**. It deletes your profiles, schedule rules
@@ -250,6 +260,12 @@ permission problem apart from a bug.
 Run the app with `open -a` rather than launching the binary directly: macOS attributes
 the audio permission to whichever process started it, so running it straight from a
 terminal asks Terminal's permission instead of the app's.
+
+### Entitlements
+
+The app is sandboxed and asks for exactly two things: `device.audio-input`, which is
+what process taps require, and `files.user-selected.read-write`, which is what lets the
+export and import panels read and write the file the user picks. Nothing else.
 
 ### Releasing
 

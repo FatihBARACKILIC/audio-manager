@@ -35,7 +35,7 @@ through our own DSP graph into an aggregate device.
 | Localization | String Catalog, EN default + TR |
 | Launch at login | Opt-in in Settings, via `SMAppService` only |
 | Shortcuts | User-configurable. Panel default `⌘⇧V`; focus mode has its own (unassigned by default) |
-| Persistence | Versioned JSON in Application Support |
+| Persistence | Versioned JSON in Application Support, exportable to a user-chosen file |
 | Branch | Work directly on `main` |
 
 ---
