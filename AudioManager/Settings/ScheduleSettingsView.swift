@@ -52,17 +52,19 @@ struct ScheduleSettingsView: View {
 
             Divider()
 
-            HStack {
-                Button(action: addRule) {
-                    Image(systemName: "plus")
-                }
-                .help(Text("Add a rule"))
+            HStack(spacing: 6) {
+                ListActionButton(
+                    symbol: "plus",
+                    label: Text("Add a rule"),
+                    action: addRule
+                )
 
-                Button(action: deleteSelected) {
-                    Image(systemName: "minus")
-                }
-                .disabled(selection == nil)
-                .help(Text("Delete the selected rule"))
+                ListActionButton(
+                    symbol: "minus",
+                    label: Text("Delete the selected rule"),
+                    isEnabled: selection != nil,
+                    action: deleteSelected
+                )
 
                 Spacer()
             }

@@ -45,17 +45,19 @@ struct ProfileSettingsView: View {
                 .controlSize(.small)
                 .onSubmit(addProfile)
 
-                Button(action: addProfile) {
-                    Image(systemName: "plus")
-                }
-                .disabled(newProfileName.trimmingCharacters(in: .whitespaces).isEmpty)
-                .help(Text("Save the current setup as a profile"))
+                ListActionButton(
+                    symbol: "plus",
+                    label: Text("Save the current setup as a profile"),
+                    isEnabled: !newProfileName.trimmingCharacters(in: .whitespaces).isEmpty,
+                    action: addProfile
+                )
 
-                Button(action: deleteSelected) {
-                    Image(systemName: "minus")
-                }
-                .disabled(selection == nil)
-                .help(Text("Delete the selected profile"))
+                ListActionButton(
+                    symbol: "minus",
+                    label: Text("Delete the selected profile"),
+                    isEnabled: selection != nil,
+                    action: deleteSelected
+                )
             }
             .padding(8)
         }
