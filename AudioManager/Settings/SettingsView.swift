@@ -215,7 +215,7 @@ struct GeneralSettingsView: View {
                 Text("Replace")
             }
         } message: {
-            Text("Your current profiles, schedule rules and preferences will be replaced by the ones in that file.")
+            Text("Your current profiles, schedule rules and preferences will be replaced by the ones in that file. If that file has Open at login turned on, Audio Manager will register itself to start with your Mac.")
         }
         .alert(Text("Remove Audio Manager from this Mac?"), isPresented: $isConfirmingRemoval) {
             Button(role: .cancel) {

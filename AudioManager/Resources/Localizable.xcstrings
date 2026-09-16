@@ -1442,13 +1442,13 @@
         }
       }
     },
-    "Your current profiles, schedule rules and preferences will be replaced by the ones in that file.": {
+    "Your current profiles, schedule rules and preferences will be replaced by the ones in that file. If that file has Open at login turned on, Audio Manager will register itself to start with your Mac.": {
       "extractionState": "manual",
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Şu anki profillerin, zamanlama kuralların ve tercihlerin o dosyadakilerle değiştirilecek."
+            "value": "Şu anki profillerin, zamanlama kuralların ve tercihlerin o dosyadakilerle değiştirilecek. O dosyada Açılışta başlat açıksa, Audio Manager kendini Mac’inle birlikte başlayacak şekilde kaydedecek."
           }
         }
       }

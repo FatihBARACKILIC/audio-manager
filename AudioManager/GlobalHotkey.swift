@@ -94,7 +94,11 @@ final class GlobalHotkeyCenter {
         // quit; `deinit` on the main actor cannot call actor-isolated code.
     }
 
-    /// Replaces any existing registration for `name` with the given shortcut.
+    /// Registers one shortcut and returns its id, or `nil` when the shortcut is unusable
+    /// or the system refuses it (another app already owns that combination).
+    ///
+    /// Additive: `unregisterAll` is what takes registrations away, and `registerShortcuts`
+    /// calls it before putting the current set back.
     @discardableResult
     func register(_ shortcut: KeyboardShortcut?, action: @escaping () -> Void) -> UInt32? {
         installHandlerIfNeeded()
