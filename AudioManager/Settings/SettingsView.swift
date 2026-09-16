@@ -2,22 +2,46 @@ import AudioDomain
 import AudioPersistence
 import SwiftUI
 
+/// The settings window's tabs, named so the panel can send the user straight to the one
+/// that explains what it just told them about.
+enum SettingsTab: Hashable {
+    case general
+    case profiles
+    case schedule
+    case shortcuts
+}
+
+/// Which tab the settings window is showing.
+///
+/// Held outside the view so that asking for a tab works whether the window is being
+/// built for the first time or is already open behind the panel.
+@Observable
+@MainActor
+final class SettingsSelection {
+    var tab: SettingsTab = .general
+}
+
 struct SettingsView: View {
     @Bindable var model: AppModel
+    @Bindable var selection: SettingsSelection
 
     var body: some View {
-        TabView {
+        TabView(selection: $selection.tab) {
             GeneralSettingsView(model: model)
                 .tabItem { Label("General", systemImage: "gearshape") }
+                .tag(SettingsTab.general)
 
             ProfileSettingsView(model: model)
                 .tabItem { Label("Profiles", systemImage: "square.stack.3d.up") }
+                .tag(SettingsTab.profiles)
 
             ScheduleSettingsView(model: model)
                 .tabItem { Label("Schedule", systemImage: "clock") }
+                .tag(SettingsTab.schedule)
 
             ShortcutSettingsView(model: model)
                 .tabItem { Label("Shortcuts", systemImage: "keyboard") }
+                .tag(SettingsTab.shortcuts)
         }
         .frame(minWidth: 620, minHeight: 440)
     }

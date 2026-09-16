@@ -15,6 +15,12 @@ struct AppRowView: View {
     var body: some View {
         VStack(spacing: 0) {
             mainRow
+            if let override {
+                overrideNotice(override)
+                    .padding(.leading, 50)
+                    .padding(.trailing, 14)
+                    .padding(.top, 4)
+            }
             if isExpanded {
                 advancedControls
                     .padding(.leading, 46)
@@ -43,7 +49,9 @@ struct AppRowView: View {
                             .accessibilityHidden(true)
                     }
 
-                    if state.reason != .manual {
+                    // The override notice below already says this in words, so the
+                    // badge is only worth the space when there is no notice.
+                    if state.reason != .manual, override == nil {
                         Image(systemName: reasonSymbol)
                             .font(.caption2)
                             .foregroundStyle(.secondary)
@@ -62,6 +70,7 @@ struct AppRowView: View {
                     .controlSize(.mini)
                     .disabled(state.isMuted)
                     .accessibilityLabel(Text("Volume for \(app.name)"))
+                    .accessibilityHint(override.map(\.explanation) ?? Text(""))
                     .accessibilityValue(Text("\(Int(settings.volume * 100)) percent"))
 
                     Text("\(Int(settings.volume * 100))%")
@@ -78,8 +87,9 @@ struct AppRowView: View {
                     .frame(width: 18)
             }
             .buttonStyle(.plain)
-            .foregroundStyle(state.isMuted ? Color.accentColor : Color.secondary)
-            .help(state.isMuted ? Text("Unmute \(app.name)") : Text("Mute \(app.name)"))
+            .disabled(override != nil)
+            .foregroundStyle(muteButtonTint)
+            .help(muteButtonHelp)
             .accessibilityLabel(state.isMuted ? Text("Unmute \(app.name)") : Text("Mute \(app.name)"))
 
             Button(action: onToggleExpanded) {
@@ -166,6 +176,64 @@ struct AppRowView: View {
                 .foregroundStyle(.secondary)
             }
         }
+    }
+
+    /// Something the user cannot change from this row is deciding this app's state.
+    ///
+    /// Only schedule rules and focus mode qualify: a profile's settings are overridden
+    /// the moment the user touches the row, so a profile never leaves a control dead.
+    private struct Override {
+        var explanation: Text
+        var actionLabel: Text
+        var action: () -> Void
+    }
+
+    private var override: Override? {
+        guard state.isMuted else { return nil }
+        switch state.reason {
+        case .schedule:
+            return Override(
+                explanation: Text("Muted by a schedule rule"),
+                actionLabel: Text("Change\u{2026}"),
+                action: { AppCommands.openSettings(tab: .schedule) }
+            )
+        case .focusMode:
+            return Override(
+                explanation: Text("Muted by focus mode"),
+                actionLabel: Text("Allow"),
+                action: { model.toggleFocusMembership(for: app.key) }
+            )
+        case .manual, .profile:
+            return nil
+        }
+    }
+
+    private func overrideNotice(_ override: Override) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: state.reason == .schedule ? "clock.fill" : "moon.fill")
+                .font(.caption2)
+            override.explanation
+                .font(.caption2)
+            Button(action: override.action) {
+                override.actionLabel
+                    .font(.caption2)
+            }
+            .buttonStyle(.link)
+            Spacer()
+        }
+        .foregroundStyle(.secondary)
+    }
+
+    private var muteButtonTint: Color {
+        if override != nil { return .secondary }
+        return state.isMuted ? Color.accentColor : Color.secondary
+    }
+
+    private var muteButtonHelp: Text {
+        if let override {
+            return override.explanation
+        }
+        return state.isMuted ? Text("Unmute \(app.name)") : Text("Mute \(app.name)")
     }
 
     private var reasonSymbol: String {

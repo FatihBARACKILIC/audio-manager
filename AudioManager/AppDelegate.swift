@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
     private var settingsWindow: NSWindow?
+    private let settingsSelection = SettingsSelection()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         installStatusItem()
@@ -152,7 +153,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Settings window
 
-    func showSettings() {
+    func showSettings(tab: SettingsTab = .general) {
+        settingsSelection.tab = tab
+
         if let settingsWindow {
             settingsWindow.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
@@ -166,7 +169,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             defer: false
         )
         window.title = String(localized: "Audio Manager Settings")
-        window.contentViewController = NSHostingController(rootView: SettingsView(model: model))
+        window.contentViewController = NSHostingController(
+            rootView: SettingsView(model: model, selection: settingsSelection)
+        )
         window.isReleasedWhenClosed = false
         window.center()
         settingsWindow = window
@@ -197,8 +202,8 @@ enum AppCommands {
         NSApp.delegate as? AppDelegate
     }
 
-    static func openSettings() {
-        delegate?.showSettings()
+    static func openSettings(tab: SettingsTab = .general) {
+        delegate?.showSettings(tab: tab)
     }
 
     static func closePanel() {
