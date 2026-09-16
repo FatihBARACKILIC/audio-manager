@@ -1,0 +1,134 @@
+name: Release
+
+# Tag a version and this builds, signs, notarises and publishes the app, then points
+# the Homebrew cask at the new download. Nothing here runs on an ordinary push.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build, without the leading v (e.g. 1.0.1)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Work out the version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ github.event.inputs.version }}"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Building $version"
+
+      - name: Run the tests
+        working-directory: Packages/AudioManagerKit
+        run: swift test --parallel
+
+      # A Developer ID identity is what lets the app open on someone else's Mac without
+      # Gatekeeper refusing it. Without these secrets the build still runs, but produces
+      # an unsigned app that is not fit to publish.
+      - name: Import the signing certificate
+        env:
+          CERTIFICATE_P12: ${{ secrets.DEVELOPER_ID_CERTIFICATE_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ -z "$CERTIFICATE_P12" ]; then
+            echo "::error::DEVELOPER_ID_CERTIFICATE_P12 is not set — see README, Releasing."
+            exit 1
+          fi
+          keychain="$RUNNER_TEMP/build.keychain"
+          password="$(uuidgen)"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          echo "$CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$keychain" \
+            -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$password" "$keychain" > /dev/null
+          security list-keychain -d user -s "$keychain" login.keychain-db
+          rm "$RUNNER_TEMP/certificate.p12"
+
+      - name: Build
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          xcodebuild build \
+            -project AudioManager.xcodeproj \
+            -scheme AudioManager \
+            -configuration Release \
+            -destination 'platform=macOS' \
+            -derivedDataPath build \
+            MARKETING_VERSION="${{ steps.version.outputs.version }}" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Developer ID Application" \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            OTHER_CODE_SIGN_FLAGS="--timestamp" \
+            -quiet
+
+      - name: Notarise and staple
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_APP_PASSWORD }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          app="build/Build/Products/Release/AudioManager.app"
+          ditto -c -k --keepParent "$app" "$RUNNER_TEMP/notarize.zip"
+          xcrun notarytool submit "$RUNNER_TEMP/notarize.zip" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_ID_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait
+          # Stapling lets the app launch on a Mac that is offline the first time.
+          xcrun stapler staple "$app"
+
+      - name: Package
+        id: package
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          archive="AudioManager-$version.zip"
+          ditto -c -k --keepParent "build/Build/Products/Release/AudioManager.app" "$archive"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(shasum -a 256 "$archive" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          gh release create "v$version" "${{ steps.package.outputs.archive }}" \
+            --title "Audio Manager $version" \
+            --generate-notes || \
+          gh release upload "v$version" "${{ steps.package.outputs.archive }}" --clobber
+
+      # The cask lives in this repo, so a release is only finished once it points at the
+      # build that was just published.
+      - name: Point the Homebrew cask at this build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          sha="${{ steps.package.outputs.sha256 }}"
+          sed -i '' -E "s/^  version \".*\"$/  version \"$version\"/" Casks/audio-manager.rb
+          sed -i '' -E "s|^  sha256 .*$|  sha256 \"$sha\"|" Casks/audio-manager.rb
+          if git diff --quiet Casks/audio-manager.rb; then
+            echo "Cask already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/audio-manager.rb
+          git commit -m "chore: point the cask at $version"
+          git push origin HEAD:${{ github.event.repository.default_branch }}
