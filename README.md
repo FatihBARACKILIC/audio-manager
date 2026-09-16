@@ -283,6 +283,8 @@ not otherwise.
 Swift 6, no third-party dependencies, no audio driver, no private APIs. It uses **Core
 Audio process taps**, the supported API for capturing another process's output.
 
+What changed in each version is in the [changelog](CHANGELOG.md).
+
 If you want to build it, read the code, or contribute, see
 **[docs/DEVELOPING.md](docs/DEVELOPING.md)**. The rules the code is held to are in
 [AGENTS.md](AGENTS.md).
