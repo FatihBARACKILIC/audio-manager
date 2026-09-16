@@ -503,7 +503,7 @@ final class AppModel {
 
     /// Notifies about changes the user did not make themselves.
     private func announce(states: [EffectiveAppState], apps: [AudioApp]) {
-        let byKey = Dictionary(uniqueKeysWithValues: states.map { ($0.key, $0) })
+        let byKey = Dictionary(states.map { ($0.key, $0) }, uniquingKeysWith: { first, _ in first })
         notifications.reportAutomaticChanges(
             previous: lastStates,
             current: byKey,
@@ -525,6 +525,8 @@ final class AppModel {
         meterTask = nil
         guard isPanelVisible else {
             levels = [:]
+            // Nothing on screen needs the rasterised icons until the panel opens again.
+            AppIconCache.shared.clear()
             return
         }
 
@@ -533,11 +535,11 @@ final class AppModel {
             // in the noise. Nothing runs at all while the panel is closed.
             while !Task.isCancelled {
                 guard let self else { return }
-                if let tapEngine = engine as? TapEngine {
-                    let peaks = await tapEngine.peakLevels()
-                    if !Task.isCancelled {
-                        levels = peaks
-                    }
+                let peaks = await engine.peakLevels()
+                // Assigning an identical dictionary would still invalidate every view
+                // observing it, so a silent machine with the panel open redraws nothing.
+                if !Task.isCancelled, peaks != levels {
+                    levels = peaks
                 }
                 try? await Task.sleep(for: .milliseconds(66))
             }

@@ -44,7 +44,7 @@ final class NotificationService {
     ) {
         guard enabled, isAuthorized else { return }
 
-        let names = Dictionary(uniqueKeysWithValues: apps.map { ($0.key, $0.name) })
+        let names = Dictionary(apps.map { ($0.key, $0.name) }, uniquingKeysWith: { first, _ in first })
 
         for (key, state) in current {
             guard state.reason == .schedule || state.reason == .focusMode else { continue }
@@ -65,7 +65,7 @@ final class NotificationService {
     func reportLoudApps(states: [AppKey: EffectiveAppState], apps: [AudioApp], enabled: Bool) {
         guard enabled, isAuthorized else { return }
 
-        let names = Dictionary(uniqueKeysWithValues: apps.map { ($0.key, $0.name) })
+        let names = Dictionary(apps.map { ($0.key, $0.name) }, uniquingKeysWith: { first, _ in first })
 
         for (key, state) in states {
             let isLoud = !state.isMuted && state.gain >= NotificationService.loudGainThreshold
@@ -81,6 +81,10 @@ final class NotificationService {
                 warnedApps.remove(key)
             }
         }
+
+        // Apps that stopped being controlled are dropped rather than remembered
+        // forever, so a long session cannot grow this set without bound.
+        warnedApps.formIntersection(states.keys)
     }
 
     private func post(title: String, body: String, identifier: String) {

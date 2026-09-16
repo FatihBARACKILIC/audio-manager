@@ -9,20 +9,32 @@ struct AppRowView: View {
     let isExpanded: Bool
     let onToggleExpanded: () -> Void
 
-    private var state: EffectiveAppState { model.state(for: app.key) }
-    private var settings: AppAudioSettings { model.settings(for: app.key) }
+    /// Everything this row needs from the policy, worked out once.
+    ///
+    /// `model.state(for:)` folds manual settings, the active profile, focus mode, the
+    /// schedule and the hearing limit together on every call, and the row asks about
+    /// the answer a dozen times — for the mute icon, its tint, its help text, the
+    /// reason badge, the override notice. Resolving once per body turns that back into
+    /// one pass, which matters because a level meter tick redraws every visible row.
+    private struct Resolved {
+        var state: EffectiveAppState
+        var settings: AppAudioSettings
+        var override: Override?
+    }
 
     var body: some View {
+        let resolved = resolve()
+
         VStack(spacing: 0) {
-            mainRow
-            if let override {
-                overrideNotice(override)
+            mainRow(resolved)
+            if let override = resolved.override {
+                overrideNotice(override, reason: resolved.state.reason)
                     .padding(.leading, 50)
                     .padding(.trailing, 14)
                     .padding(.top, 4)
             }
             if isExpanded {
-                advancedControls
+                advancedControls(resolved)
                     .padding(.leading, 46)
                     .padding(.trailing, 14)
                     .padding(.bottom, 10)
@@ -32,8 +44,20 @@ struct AppRowView: View {
         .contentShape(.rect)
     }
 
-    private var mainRow: some View {
-        HStack(spacing: 10) {
+    private func resolve() -> Resolved {
+        let state = model.state(for: app.key)
+        return Resolved(
+            state: state,
+            settings: model.settings(for: app.key),
+            override: override(for: state)
+        )
+    }
+
+    private func mainRow(_ resolved: Resolved) -> some View {
+        let state = resolved.state
+        let settings = resolved.settings
+
+        return HStack(spacing: 10) {
             AppIconView(bundlePath: app.bundlePath, isPlaying: app.isPlaying)
                 .frame(width: 26, height: 26)
                 .padding(.leading, 14)
@@ -45,17 +69,17 @@ struct AppRowView: View {
                         .lineLimit(1)
 
                     if app.isPlaying {
-                        LevelIndicator(level: model.levels[app.key] ?? 0)
+                        AppLevelIndicator(model: model, key: app.key)
                             .accessibilityHidden(true)
                     }
 
                     // The override notice below already says this in words, so the
                     // badge is only worth the space when there is no notice.
-                    if state.reason != .manual, override == nil {
-                        Image(systemName: reasonSymbol)
+                    if state.reason != .manual, resolved.override == nil {
+                        Image(systemName: symbol(for: state.reason))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
-                            .help(reasonDescription)
+                            .help(description(for: state.reason))
                     }
                 }
 
@@ -68,7 +92,7 @@ struct AppRowView: View {
                         label: Text("Volume for \(app.name)")
                     )
                     .disabled(state.isMuted)
-                    .accessibilityHint(override?.explanation ?? Text(verbatim: ""))
+                    .accessibilityHint(resolved.override?.explanation ?? Text(verbatim: ""))
 
                     Text(verbatim: "\(Int(settings.volume * 100))%")
                         .font(.caption2.monospacedDigit())
@@ -84,9 +108,9 @@ struct AppRowView: View {
                     .frame(width: 18)
             }
             .buttonStyle(.plain)
-            .disabled(override != nil)
-            .foregroundStyle(muteButtonTint)
-            .help(muteButtonHelp)
+            .disabled(resolved.override != nil)
+            .foregroundStyle(muteButtonTint(resolved))
+            .help(muteButtonHelp(resolved))
             .accessibilityLabel(state.isMuted ? Text("Unmute \(app.name)") : Text("Mute \(app.name)"))
 
             Button(action: onToggleExpanded) {
@@ -101,8 +125,10 @@ struct AppRowView: View {
         }
     }
 
-    private var advancedControls: some View {
-        VStack(alignment: .leading, spacing: 10) {
+    private func advancedControls(_ resolved: Resolved) -> some View {
+        let settings = resolved.settings
+
+        return VStack(alignment: .leading, spacing: 10) {
             Picker(selection: Binding(
                 get: { settings.mode },
                 set: { model.setMode($0, for: app.key) }
@@ -185,7 +211,7 @@ struct AppRowView: View {
         var action: () -> Void
     }
 
-    private var override: Override? {
+    private func override(for state: EffectiveAppState) -> Override? {
         guard state.isMuted else { return nil }
         switch state.reason {
         case .schedule:
@@ -205,9 +231,9 @@ struct AppRowView: View {
         }
     }
 
-    private func overrideNotice(_ override: Override) -> some View {
+    private func overrideNotice(_ override: Override, reason: EffectiveAppState.Reason) -> some View {
         HStack(spacing: 6) {
-            Image(systemName: state.reason == .schedule ? "clock.fill" : "moon.fill")
+            Image(systemName: reason == .schedule ? "clock.fill" : "moon.fill")
                 .font(.caption2)
             override.explanation
                 .font(.caption2)
@@ -221,20 +247,20 @@ struct AppRowView: View {
         .foregroundStyle(.secondary)
     }
 
-    private var muteButtonTint: Color {
-        if override != nil { return .secondary }
-        return state.isMuted ? Color.accentColor : Color.secondary
+    private func muteButtonTint(_ resolved: Resolved) -> Color {
+        if resolved.override != nil { return .secondary }
+        return resolved.state.isMuted ? Color.accentColor : Color.secondary
     }
 
-    private var muteButtonHelp: Text {
-        if let override {
+    private func muteButtonHelp(_ resolved: Resolved) -> Text {
+        if let override = resolved.override {
             return override.explanation
         }
-        return state.isMuted ? Text("Unmute \(app.name)") : Text("Mute \(app.name)")
+        return resolved.state.isMuted ? Text("Unmute \(app.name)") : Text("Mute \(app.name)")
     }
 
-    private var reasonSymbol: String {
-        switch state.reason {
+    private func symbol(for reason: EffectiveAppState.Reason) -> String {
+        switch reason {
         case .focusMode: "moon.fill"
         case .schedule: "clock.fill"
         case .profile: "square.stack.3d.up.fill"
@@ -242,8 +268,8 @@ struct AppRowView: View {
         }
     }
 
-    private var reasonDescription: Text {
-        switch state.reason {
+    private func description(for reason: EffectiveAppState.Reason) -> Text {
+        switch reason {
         case .focusMode: Text("Set by focus mode")
         case .schedule: Text("Set by a schedule rule")
         case .profile: Text("Set by the active profile")
@@ -276,6 +302,20 @@ struct AppIconView: View {
             }
         }
         .accessibilityHidden(true)
+    }
+}
+
+/// The only part of a row that reads `levels`.
+///
+/// Its own view on purpose: observation is tracked per view body, so reading the level
+/// dictionary here means a meter tick invalidates three capsules rather than every
+/// visible row — and with it every slider, label and policy lookup the row draws.
+struct AppLevelIndicator: View {
+    let model: AppModel
+    let key: AppKey
+
+    var body: some View {
+        LevelIndicator(level: model.levels[key] ?? 0)
     }
 }
 

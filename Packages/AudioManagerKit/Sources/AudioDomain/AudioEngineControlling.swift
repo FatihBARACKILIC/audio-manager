@@ -64,11 +64,23 @@ public protocol AudioEngineControlling: Sendable {
     /// queue and return.
     func updateParameters(states: [EffectiveAppState])
 
+    /// Peak level per app since the last read, for the panel's meters.
+    ///
+    /// Polled by the UI at a low rate only while the panel is on screen, never pushed
+    /// from the render thread. Empty while nothing is rendering, which is also the
+    /// answer an implementation without metering gives.
+    func peakLevels() async -> [AppKey: Float]
+
     /// Releases every tap and device. Safe to call repeatedly.
     func shutdown() async
 
     /// Engine status changes, for the UI's health indicator.
     var statusUpdates: AsyncStream<EngineStatus> { get }
+}
+
+extension AudioEngineControlling {
+    /// An engine with nothing to meter reports nothing, so a fake does not have to.
+    public func peakLevels() async -> [AppKey: Float] { [:] }
 }
 
 /// Publishes the set of audio processes as the system reports it.
