@@ -298,9 +298,13 @@ struct LevelIndicator: View {
         .frame(height: 9, alignment: .bottom)
     }
 
+    private static let barHeights: [CGFloat] = [4, 9, 6]
+
     private func height(for index: Int) -> CGFloat {
         let scaled = CGFloat(min(max(level, 0), 1))
-        let base: CGFloat = [4, 9, 6][index]
+        let base = LevelIndicator.barHeights.indices.contains(index)
+            ? LevelIndicator.barHeights[index]
+            : 4
         return max(2, base * (0.35 + scaled * 0.65))
     }
 

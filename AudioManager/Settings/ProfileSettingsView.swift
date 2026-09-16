@@ -95,8 +95,8 @@ struct ProfileSettingsView: View {
 
     private func deleteSelected() {
         guard let profile = model.profiles.first(where: { $0.id == selection }) else { return }
-        model.deleteProfile(profile)
         selection = nil
+        model.deleteProfile(profile)
     }
 }
 
@@ -186,8 +186,8 @@ private struct ProfileEditor: View {
                 .disabled(!isActive)
 
                 Button(role: .destructive) {
-                    model.deleteProfile(profile)
                     onDelete()
+                    model.deleteProfile(profile)
                 } label: {
                     Text("Delete profile")
                 }

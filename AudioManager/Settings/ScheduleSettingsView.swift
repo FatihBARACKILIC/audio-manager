@@ -72,14 +72,19 @@ struct ScheduleSettingsView: View {
 
     @ViewBuilder
     private var detail: some View {
-        if let index = model.scheduleRules.firstIndex(where: { $0.id == selection }) {
+        if let id = selection, let selected = model.scheduleRules.first(where: { $0.id == id }) {
             RuleEditor(
                 model: model,
                 rule: Binding(
-                    get: { model.scheduleRules[index] },
+                    // Looked up by id, never by position: SwiftUI can read this binding
+                    // after the rule has been deleted, and a remembered index would be
+                    // pointing past the end of the array by then. `selected` is the last
+                    // known value, which is what the view is still showing.
+                    get: { model.scheduleRules.first { $0.id == id } ?? selected },
                     set: { model.updateScheduleRule($0) }
                 )
             )
+            .id(id)
         } else {
             VStack(spacing: 8) {
                 Image(systemName: "clock")
@@ -123,8 +128,10 @@ struct ScheduleSettingsView: View {
 
     private func deleteSelected() {
         guard let rule = model.scheduleRules.first(where: { $0.id == selection }) else { return }
-        model.deleteScheduleRule(rule)
+        // Drop the selection first, so nothing is still rendering the rule we are about
+        // to remove.
         selection = nil
+        model.deleteScheduleRule(rule)
     }
 }
 
