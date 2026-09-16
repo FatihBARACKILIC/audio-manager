@@ -113,7 +113,7 @@ public final class TapEngine: AudioEngineControlling, @unchecked Sendable {
         queue.async { [self] in
             guard let graph else { return }
             for state in states {
-                guard let index = graph.streamKeys.firstIndex(of: state.key) else { continue }
+                guard let index = graph.streamIndices[state.key] else { continue }
                 graph.update(
                     streamIndex: index,
                     gain: state.isMuted ? 0 : state.gain,
@@ -156,9 +156,15 @@ public final class TapEngine: AudioEngineControlling, @unchecked Sendable {
 
     private func applyOnQueue(states: [EffectiveAppState], apps: [AudioApp]) throws {
         lastApps = apps
-        lastAppliedStates = Dictionary(uniqueKeysWithValues: states.map { ($0.key, $0) })
+        // Non-trapping on purpose: grouping gives one entry per app today, but a
+        // duplicate key must degrade to "the first one wins", never to a crash that
+        // takes the user's audio with it.
+        lastAppliedStates = Dictionary(states.map { ($0.key, $0) }, uniquingKeysWith: { first, _ in first })
 
-        let processIDs = Dictionary(uniqueKeysWithValues: apps.map { ($0.key, $0.audioObjectIDs) })
+        let processIDs = Dictionary(
+            apps.map { ($0.key, $0.audioObjectIDs) },
+            uniquingKeysWith: { first, _ in first }
+        )
         // Muted and processed apps share one path: both need their tap to be read for
         // the source to stay silent.
         let controlled = states.filter { !$0.isPassthrough }
@@ -191,7 +197,7 @@ public final class TapEngine: AudioEngineControlling, @unchecked Sendable {
         // Cheap path: the graph already covers these apps, so only push new numbers.
         guard let graph else { return }
         for state in states {
-            guard let index = graph.streamKeys.firstIndex(of: state.key) else { continue }
+            guard let index = graph.streamIndices[state.key] else { continue }
             // Muting is gain zero, ramped like any other change so it does not click.
             graph.update(
                 streamIndex: index,

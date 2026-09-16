@@ -29,13 +29,17 @@ struct RenderGraphTests {
         let peaks: UnsafeMutablePointer<Float>
         let context: UnsafeMutablePointer<RenderContext>
 
+        /// Mirrors the graph's publish ring, so the fixture indexes exactly as the
+        /// render function does.
+        let slotCount = RenderGraph.coefficientSlotCount
+
         init(streamCount: Int) {
             self.streamCount = streamCount
 
-            coefficients = .allocate(capacity: streamCount * bandCount * 2)
-            coefficients.initialize(repeating: .identity, count: streamCount * bandCount * 2)
-            bypass = .allocate(capacity: streamCount * 2)
-            bypass.initialize(repeating: 1, count: streamCount * 2)
+            coefficients = .allocate(capacity: streamCount * bandCount * slotCount)
+            coefficients.initialize(repeating: .identity, count: streamCount * bandCount * slotCount)
+            bypass = .allocate(capacity: streamCount * slotCount)
+            bypass.initialize(repeating: 1, count: streamCount * slotCount)
             states = .allocate(capacity: streamCount * channelsPerStream * bandCount)
             states.initialize(repeating: BiquadState(), count: streamCount * channelsPerStream * bandCount)
             currentGains = .allocate(capacity: streamCount)
@@ -334,6 +338,57 @@ struct RenderGraphTests {
         #expect(result.allSatisfy { $0 == 0.5 })
     }
 
+    @Test("A zero-channel output buffer is refused rather than indexed backwards")
+    func rejectsZeroChannelOutput() {
+        let fixture = Fixture(streamCount: 1)
+        let frames = 4
+
+        var inputStorage: [[Float]] = [Array(repeating: 0.5, count: frames * 2)]
+        var outputStorage: [[Float]] = [Array(repeating: 0.25, count: frames * 2)]
+        let input = bufferList(from: &inputStorage, channels: 2)
+        let output = bufferList(from: &outputStorage, channels: 0)
+        defer { input.release(); output.release() }
+
+        renderTappedAudio(
+            context: fixture.context,
+            input: UnsafePointer(input.list.unsafeMutablePointer),
+            output: output.list.unsafeMutablePointer,
+            frameCount: frames
+        )
+
+        // Nothing was written at all, rather than at a negative offset.
+        #expect(outputStorage[0].allSatisfy { $0 == 0.25 })
+    }
+
+    @Test("A mono tap is folded into a stereo output")
+    func foldsMismatchedChannelCounts() {
+        let fixture = Fixture(streamCount: 1)
+        let frames = 4
+
+        var inputStorage: [[Float]] = [Array(repeating: 0.5, count: frames)]
+        var outputStorage: [[Float]] = [Array(repeating: 0, count: frames * 2)]
+        let input = bufferList(from: &inputStorage, channels: 1)
+        let output = bufferList(from: &outputStorage, channels: 2)
+        defer { input.release(); output.release() }
+
+        renderTappedAudio(
+            context: fixture.context,
+            input: UnsafePointer(input.list.unsafeMutablePointer),
+            output: output.list.unsafeMutablePointer,
+            frameCount: frames
+        )
+
+        let result = Array(UnsafeBufferPointer(
+            start: output.list[0].mData!.assumingMemoryBound(to: Float.self),
+            count: frames * 2
+        ))
+        // Every frame's left channel carries the mono signal, the right stays silent.
+        for frame in 0..<frames {
+            #expect(abs(result[frame * 2] - 0.5) < 0.0001)
+            #expect(result[frame * 2 + 1] == 0)
+        }
+    }
+
     @Test("Fewer input buffers than streams is handled without reading past the end")
     func toleratesMissingStreams() {
         let fixture = Fixture(streamCount: 4)
@@ -357,5 +412,72 @@ struct RenderGraphTests {
             count: frames * 2
         ))
         #expect(result.allSatisfy { abs($0 - 0.5) < 0.0001 })
+    }
+}
+
+/// The control-thread half of the graph: what it publishes, and — just as important —
+/// what it declines to publish, because every publish is a window in which the audio
+/// thread could be reading the slot being written.
+@Suite("Render graph publishing")
+struct RenderGraphPublishingTests {
+
+    @Test("Changing only the gain publishes no coefficients at all")
+    func gainChangeDoesNotRepublish() {
+        let graph = RenderGraph(streamKeys: [.bundle("a"), .bundle("b")], sampleRate: 48000)
+        let equalizer = EqualizerSettings(isEnabled: true, gains: [6, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+        graph.update(streamIndex: 0, gain: 1, equalizer: equalizer)
+        let afterEqualizer = graph.publishedSlotForTesting
+
+        // A slider drag: many gain changes, same equalizer.
+        for step in 0..<20 {
+            graph.update(streamIndex: 0, gain: Double(step) / 20, equalizer: equalizer)
+        }
+
+        #expect(graph.publishedSlotForTesting == afterEqualizer)
+    }
+
+    @Test("Each equalizer change lands in a different slot than the last")
+    func equalizerChangesRotateTheRing() {
+        let graph = RenderGraph(streamKeys: [.bundle("a")], sampleRate: 48000)
+        var seen: [UInt32] = []
+
+        for decibels in stride(from: 1.0, through: 6.0, by: 1.0) {
+            var equalizer = EqualizerSettings(isEnabled: true)
+            equalizer.setGain(decibels, at: 4)
+            graph.update(streamIndex: 0, gain: 1, equalizer: equalizer)
+            seen.append(graph.publishedSlotForTesting)
+        }
+
+        #expect(seen.count == 6)
+        for (previous, next) in zip(seen, seen.dropFirst()) {
+            #expect(previous != next)
+        }
+        #expect(seen.allSatisfy { $0 < UInt32(RenderGraph.coefficientSlotCount) })
+    }
+
+    @Test("Publishing one stream leaves the other streams' coefficients intact")
+    func publishingOneStreamKeepsTheOthers() {
+        let graph = RenderGraph(streamKeys: [.bundle("a"), .bundle("b")], sampleRate: 48000)
+
+        var first = EqualizerSettings(isEnabled: true)
+        first.setGain(9, at: 0)
+        graph.update(streamIndex: 0, gain: 1, equalizer: first)
+
+        var second = EqualizerSettings(isEnabled: true)
+        second.setGain(-9, at: 9)
+        graph.update(streamIndex: 1, gain: 1, equalizer: second)
+
+        // Both streams must be non-bypassed in the slot that is live now.
+        #expect(graph.bypassForTesting(streamIndex: 0) == 0)
+        #expect(graph.bypassForTesting(streamIndex: 1) == 0)
+    }
+
+    @Test("A stream index outside the graph is ignored")
+    func ignoresOutOfRangeStreams() {
+        let graph = RenderGraph(streamKeys: [.bundle("a")], sampleRate: 48000)
+        graph.update(streamIndex: 5, gain: 0.5, equalizer: .flat)
+        graph.update(streamIndex: -1, gain: 0.5, equalizer: .flat)
+        #expect(graph.peak(atStreamIndex: 5) == 0)
     }
 }
