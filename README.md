@@ -78,14 +78,31 @@ brew upgrade --cask audio-manager
 
 You can also update everything you installed with Homebrew at once with `brew upgrade`.
 
-### By hand
+### By downloading it from GitHub
 
-Download `AudioManager-<version>.zip` from the
-[latest release](https://github.com/FatihBARACKILIC/audio-manager/releases/latest),
-unzip it, and drag **AudioManager.app** into your Applications folder.
+No terminal needed. Four steps:
 
-The app is signed and notarised by Apple, so it opens normally — no right-click-to-open
-workaround and no security warning to dismiss.
+**1. Open the release page.** It is here:
+[latest release](https://github.com/FatihBARACKILIC/audio-manager/releases/latest).
+
+**2. Download the app.** Under *Assets*, click `AudioManager-1.0.0.zip` — the number is
+whatever the current version is. Safari unzips downloads for you; in other browsers,
+double-click the file in your Downloads folder afterwards.
+
+**3. Drag `AudioManager.app` into your Applications folder.** Open a Finder window,
+press <kbd>⌘</kbd><kbd>⇧</kbd><kbd>A</kbd> to get to Applications, and drop it in.
+
+**4. Double-click it to open.** The app is signed and notarised by Apple, so it opens
+normally — no right-click-to-open workaround and no security warning to dismiss. If macOS
+does complain, the download was incomplete; delete it and fetch it again.
+
+**To update later**, come back to the same page, download the new version, and drag it
+into Applications over the old one, choosing **Replace**. Quit Audio Manager from the
+panel first. Your profiles, schedule rules and preferences are stored separately from the
+app, so replacing it keeps all of them.
+
+This is the route Homebrew saves you from repeating — if updating by hand sounds
+tedious, it is worth the one-time setup above.
 
 ### The first launch
 
