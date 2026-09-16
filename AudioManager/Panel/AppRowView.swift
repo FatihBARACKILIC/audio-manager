@@ -60,18 +60,15 @@ struct AppRowView: View {
                 }
 
                 HStack(spacing: 8) {
-                    Slider(
+                    VolumeSlider(
                         value: Binding(
                             get: { settings.volume },
                             set: { model.setVolume($0, for: app.key) }
                         ),
-                        in: 0...1
+                        label: Text("Volume for \(app.name)")
                     )
-                    .controlSize(.mini)
                     .disabled(state.isMuted)
-                    .accessibilityLabel(Text("Volume for \(app.name)"))
                     .accessibilityHint(override?.explanation ?? Text(verbatim: ""))
-                    .accessibilityValue(Text("\(Int(settings.volume * 100)) percent"))
 
                     Text(verbatim: "\(Int(settings.volume * 100))%")
                         .font(.caption2.monospacedDigit())

@@ -109,6 +109,23 @@ public final class TapEngine: AudioEngineControlling, @unchecked Sendable {
         }
     }
 
+    public func updateParameters(states: [EffectiveAppState]) {
+        queue.async { [self] in
+            guard let graph else { return }
+            for state in states {
+                guard let index = graph.streamKeys.firstIndex(of: state.key) else { continue }
+                graph.update(
+                    streamIndex: index,
+                    gain: state.isMuted ? 0 : state.gain,
+                    equalizer: state.isMuted ? .flat : state.equalizer
+                )
+                // Keep the remembered state in step, so rebuilding after a device
+                // change does not resurrect the value the slider started from.
+                lastAppliedStates[state.key] = state
+            }
+        }
+    }
+
     public func shutdown() async {
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             queue.async { [self] in

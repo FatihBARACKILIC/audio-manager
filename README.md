@@ -77,7 +77,9 @@ Click the menu bar icon, or press **⌘⇧V**, and the panel opens with every ru
 Apps that are making sound right now are listed first.
 
 **Each row** has a volume slider and a mute button. Click the chevron on the right for
-that app's advanced controls.
+that app's advanced controls. The slider takes effect as you drag it, and the dots under
+it mark every 20% — the slider settles onto one when you get close, but any value in
+between is still yours to pick.
 
 **Two modes per app**, chosen in the advanced controls:
 

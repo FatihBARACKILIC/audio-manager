@@ -76,4 +76,29 @@ struct VolumeCurveTests {
         #expect(OutputLimit(maximumGain: -1).maximumGain == OutputLimit.range.lowerBound)
         #expect(OutputLimit(maximumGain: .nan).maximumGain == 1)
     }
+
+    // MARK: - Guide marks
+
+    @Test("A value near a guide settles on it")
+    func snapsWhenClose() {
+        #expect(VolumeCurve.snappedToGuide(0.605) == 0.6)
+        #expect(VolumeCurve.snappedToGuide(0.395) == 0.4)
+        #expect(VolumeCurve.snappedToGuide(0.015) == 0.0)
+        #expect(VolumeCurve.snappedToGuide(0.99) == 1.0)
+    }
+
+    @Test("A value between guides is left alone, so fine control survives")
+    func leavesFreeValuesAlone() {
+        #expect(VolumeCurve.snappedToGuide(0.37) == 0.37)
+        #expect(VolumeCurve.snappedToGuide(0.5) == 0.5)
+        #expect(VolumeCurve.snappedToGuide(0.73) == 0.73)
+    }
+
+    @Test("Snapping clamps and never returns a value the slider cannot show")
+    func snappingStaysInRange() {
+        #expect(VolumeCurve.snappedToGuide(-1) == 0)
+        #expect(VolumeCurve.snappedToGuide(5) == 1)
+        #expect(VolumeCurve.snappedToGuide(.nan) == 0)
+        #expect(VolumeCurve.snappedToGuide(.infinity) == 0)
+    }
 }

@@ -180,7 +180,7 @@ final class AppModel {
         if volume < 1, settings.mode == .muteOnly {
             settings.mode = .fullControl
         }
-        update(settings, for: key)
+        update(settings, for: key, isLive: true)
     }
 
     func setMuted(_ isMuted: Bool, for key: AppKey) {
@@ -203,14 +203,14 @@ final class AppModel {
         var settings = settings(for: key)
         settings.setBoost(decibels: decibels)
         if decibels > 0 { settings.mode = .fullControl }
-        update(settings, for: key)
+        update(settings, for: key, isLive: true)
     }
 
     func setEqualizer(_ equalizer: EqualizerSettings, for key: AppKey) {
         var settings = settings(for: key)
         settings.equalizer = equalizer
         if !equalizer.isFlat { settings.mode = .fullControl }
-        update(settings, for: key)
+        update(settings, for: key, isLive: true)
     }
 
     func resetSettings(for key: AppKey) {
@@ -219,10 +219,32 @@ final class AppModel {
         saveSoon()
     }
 
-    private func update(_ settings: AppAudioSettings, for key: AppKey) {
+    /// `isLive` marks the continuous controls — volume, boost, equalizer bands.
+    ///
+    /// Those reach the engine straight away, because `applySoon` coalesces by
+    /// restarting its timer on every change: during a drag the timer is cancelled
+    /// before it ever fires, so the user would hear nothing until they let go. The
+    /// debounced pass still runs behind it, since a drag can also change the shape of
+    /// the graph — the first move of a mute-only app switches it to full control.
+    private func update(_ settings: AppAudioSettings, for key: AppKey, isLive: Bool = false) {
         appSettings[key] = settings
+        if isLive {
+            sendParametersNow()
+        }
         applySoon()
         saveSoon()
+    }
+
+    /// Hands the current gains and equalizer settings to the engine with no delay.
+    ///
+    /// Cheap by construction: the engine ignores apps it is not already rendering, and
+    /// for the rest this is a few float stores that the render thread picks up and ramps.
+    /// No task is created, so a drag costs no allocation and arrives in order.
+    private func sendParametersNow() {
+        guard permission == .granted else { return }
+        let states = policy.activeStates(for: apps)
+        guard !states.isEmpty else { return }
+        engine.updateParameters(states: states)
     }
 
     // MARK: - Focus and profiles

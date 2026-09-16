@@ -32,6 +32,28 @@ public enum VolumeCurve {
         return 20 * log10(gain)
     }
 
+    /// Slider positions the panel marks with a guide dot: every 20 percent.
+    public static let guidePositions = 6
+
+    /// How close to a guide the slider has to be before it settles on it.
+    ///
+    /// Two percent of travel: enough that a round number is easy to land on, small
+    /// enough that a value like 37% is still reachable. A volume control that only
+    /// offered the six marked steps would be easier to hit and much worse to use.
+    public static let guideSnapDistance = 0.02
+
+    /// Pulls a slider position onto the nearest guide mark when it is already close.
+    public static func snappedToGuide(_ slider: Double) -> Double {
+        guard slider.isFinite else { return 0 }
+        let clamped = min(max(slider, 0), 1)
+        // Divide rather than multiply by the spacing: 3 * 0.2 is not 0.6 in binary
+        // floating point, and a slider that reports 0.6000000000000001 would make the
+        // snap pointless — it exists so the value lands on a round number.
+        let steps = Double(guidePositions - 1)
+        let nearest = (clamped * steps).rounded() / steps
+        return abs(clamped - nearest) <= guideSnapDistance ? nearest : clamped
+    }
+
     /// Converts decibels to a linear multiplier (used for boost and EQ makeup gain).
     public static func linearGain(fromDecibels decibels: Double) -> Double {
         guard decibels.isFinite else { return decibels > 0 ? 1 : 0 }

@@ -50,6 +50,20 @@ public protocol AudioEngineControlling: Sendable {
     /// down and returns to `.idle`.
     func apply(states: [EffectiveAppState], for apps: [AudioApp]) async throws
 
+    /// Pushes new gains and equalizer settings for apps the engine is already running.
+    ///
+    /// The live path for a slider drag. It never creates or destroys a tap, a device or
+    /// an IOProc, so it is cheap enough to call on every frame of a drag, and apps it
+    /// does not already know about are ignored — `apply(states:for:)` is what changes
+    /// the shape of the graph. Values arrive ramped, not stepped, so dragging a slider
+    /// cannot produce zipper noise.
+    ///
+    /// Deliberately not `async`: a drag must arrive in the order the user made it, and
+    /// spawning a task per change gives up that ordering, so a stale value could land
+    /// last and stick. Implementations hand the values straight to their own serial
+    /// queue and return.
+    func updateParameters(states: [EffectiveAppState])
+
     /// Releases every tap and device. Safe to call repeatedly.
     func shutdown() async
 
