@@ -29,7 +29,13 @@ final class AppModel {
     var scheduleRules: [ScheduleRule] = []
     var focus: FocusMode = .off
     var outputLimit = OutputLimit()
-    var preferences = Preferences()
+    /// Bound straight to the controls in Settings — the toggles and the two shortcut
+    /// fields — so nothing calls an editing method on the way. Without this the only
+    /// thing that ever wrote them was the save in `stop()`, and a preference set in a
+    /// session that ended in anything but a clean quit was simply lost.
+    var preferences = Preferences() {
+        didSet { saveSoon() }
+    }
 
     /// Apps muted right now because of a schedule rule.
     private(set) var scheduleMutedApps: Set<AppKey> = []
@@ -55,6 +61,10 @@ final class AppModel {
     /// Set by diagnostics runs. Nothing is written to disk while it is on, so a
     /// throwaway test configuration can never end up in the user's real settings.
     private var isPersistenceSuspended = false
+
+    /// True while settings are being loaded or imported wholesale, so the assignments
+    /// that restore them do not schedule a save of what was just read.
+    private var isRestoringState = false
 
     /// Our own bundle identifier, so the panel never offers to mute Audio Manager.
     private let ownBundleIdentifier: Set<String>
@@ -576,6 +586,8 @@ final class AppModel {
         await engine.shutdown()
         LoginItem.synchronize(enabled: false)
 
+        isRestoringState = true
+        defer { isRestoringState = false }
         appSettings = [:]
         profiles = []
         activeProfileID = nil
@@ -592,6 +604,7 @@ final class AppModel {
     /// Exposed through `--reset-settings` so a bad state can always be recovered
     /// without hunting through the container by hand.
     func resetAllSettings() async {
+        isRestoringState = true
         appSettings = [:]
         profiles = []
         activeProfileID = nil
@@ -599,6 +612,7 @@ final class AppModel {
         focus = .off
         outputLimit = OutputLimit()
         preferences = Preferences()
+        isRestoringState = false
         isPersistenceSuspended = false
         await persist()
         await applyNow()
@@ -609,6 +623,9 @@ final class AppModel {
     private func loadSettings() async {
         let result = await store.load()
         let state = result.state
+
+        isRestoringState = true
+        defer { isRestoringState = false }
 
         appSettings = state.appSettings
         profiles = state.profiles
@@ -628,7 +645,7 @@ final class AppModel {
 
     /// Debounced so dragging a slider does not write the file on every frame.
     private func saveSoon() {
-        guard !isPersistenceSuspended else { return }
+        guard !isPersistenceSuspended, !isRestoringState else { return }
         saveTask?.cancel()
         saveTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(1))
@@ -657,6 +674,7 @@ final class AppModel {
     /// login item is synchronised rather than trusted, so the toggle in Settings keeps
     /// telling the truth about what the system actually has registered.
     func replaceSettings(with state: PersistedState) async {
+        isRestoringState = true
         appSettings = state.appSettings
         profiles = state.profiles
         activeProfileID = state.activeProfileID
@@ -665,6 +683,7 @@ final class AppModel {
         outputLimit = state.outputLimit
         preferences = state.preferences
         preferences.launchAtLogin = LoginItem.synchronize(enabled: state.preferences.launchAtLogin)
+        isRestoringState = false
 
         recomputeSchedule()
         scheduleNextScheduleWakeUp()
