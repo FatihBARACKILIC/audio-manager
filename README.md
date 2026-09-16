@@ -1,5 +1,7 @@
 # Audio Manager
 
+<img src="AudioManager/Assets.xcassets/AppIcon.appiconset/icon_128x128@2x.png" width="128" alt="Audio Manager icon: three mixer faders set to different levels">
+
 **A volume slider for every app, in your menu bar.**
 
 macOS gives you one volume knob for the whole machine. Audio Manager gives you one per
