@@ -1,6 +1,6 @@
 cask "audio-manager" do
   version "1.0.0"
-  sha256 :no_check
+  sha256 "a6e29190a954686333a9f1cee842ff71079df334080ab4232fb0169a200658e1"
 
   url "https://github.com/FatihBARACKILIC/audio-manager/releases/download/v#{version}/AudioManager-#{version}.zip",
       verified: "github.com/FatihBARACKILIC/audio-manager/"
