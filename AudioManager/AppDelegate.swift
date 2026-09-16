@@ -23,6 +23,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         installStatusItem()
 
         Task {
+            if Diagnostics.isRequested {
+                model.suspendPersistenceForDiagnostics()
+            }
             await model.start()
 
             if CommandLine.arguments.contains("--reset-settings") {

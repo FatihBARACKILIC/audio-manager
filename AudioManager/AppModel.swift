@@ -341,6 +341,17 @@ final class AppModel {
         saveSoon()
     }
 
+    /// Turns off every write to disk for the rest of the process.
+    ///
+    /// Called before anything is loaded on a diagnostics run. `--simulate-control` and
+    /// `--simulate-mute` suspend persistence themselves because they invent a profile,
+    /// but a plain `--dump-state` used to fall through to the save in `stop()` and
+    /// rewrite the user's file on its way out. Diagnostics read state and report it;
+    /// they are never a second way to configure the app.
+    func suspendPersistenceForDiagnostics() {
+        isPersistenceSuspended = true
+    }
+
     /// Puts every running app into full control at half volume with a shaped EQ,
     /// without touching stored settings.
     ///
