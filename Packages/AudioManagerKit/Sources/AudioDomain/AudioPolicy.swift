@@ -36,16 +36,19 @@ public struct EffectiveAppState: Sendable, Equatable, Hashable {
         self.reason = reason
     }
 
-    /// A tap is needed to silence the source, but nothing is re-rendered.
-    public var needsMuteOnlyTap: Bool {
+    /// The app must be silenced.
+    ///
+    /// A tap only silences its process while something is actually reading it, so this
+    /// still goes through the shared render path — the app simply contributes silence
+    /// instead of processed audio. Nothing of its signal is computed.
+    public var needsSilencing: Bool {
         isMuted
     }
 
-    /// The full capture → process → play path is needed.
+    /// The app's signal has to be altered on the way out.
     ///
-    /// This is the expensive case, so it is deliberately narrow: an unmuted
-    /// full-control app whose settings actually change the signal. An app sitting at
-    /// 100% with a flat EQ is left completely alone.
+    /// Deliberately narrow: an unmuted full-control app whose settings actually change
+    /// something. An app sitting at 100% with a flat EQ is left completely alone.
     public var needsRendering: Bool {
         guard !isMuted, mode == .fullControl else { return false }
         return abs(gain - 1) > 0.0001 || !equalizer.isFlat
@@ -53,7 +56,7 @@ public struct EffectiveAppState: Sendable, Equatable, Hashable {
 
     /// True when the engine can ignore this app entirely.
     public var isPassthrough: Bool {
-        !needsMuteOnlyTap && !needsRendering
+        !needsSilencing && !needsRendering
     }
 }
 

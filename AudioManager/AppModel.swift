@@ -293,6 +293,24 @@ final class AppModel {
         applySoon()
     }
 
+    /// Mutes every running app for the life of the process, without touching stored
+    /// settings.
+    ///
+    /// Used by `--dump-state --simulate-mute` to exercise the real mute-only path on a
+    /// machine where muting is not behaving, so the tap state can be inspected while
+    /// the user listens.
+    func simulateMuteForDiagnostics() {
+        isPersistenceSuspended = true
+        let profile = AudioProfile(
+            name: "Diagnostics mute",
+            unlistedApps: AppAudioSettings(isMuted: true, mode: .muteOnly)
+        )
+        profiles.append(profile)
+        activeProfileID = profile.id
+        appSettings.removeAll()
+        applySoon()
+    }
+
     // MARK: - Schedule
 
     func addScheduleRule(_ rule: ScheduleRule) {

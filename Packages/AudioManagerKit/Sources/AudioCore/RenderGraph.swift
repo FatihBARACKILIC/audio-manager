@@ -65,6 +65,13 @@ func renderTappedAudio(
     let streamCount = min(Int(context.streamCount), inputBuffers.count)
 
     for stream in 0..<streamCount {
+        // A silenced app is the cheapest case there is: its tap has to exist and be
+        // read for the mute to hold, but none of its audio is worth a single multiply.
+        if context.targetGains[stream] == 0, context.currentGains[stream] == 0 {
+            context.peaks[stream] = 0
+            continue
+        }
+
         let buffer = inputBuffers[stream]
         guard let data = buffer.mData else { continue }
         let channels = Int(buffer.mNumberChannels)
@@ -74,8 +81,9 @@ func renderTappedAudio(
         let availableFrames = min(frameCount, Int(buffer.mDataByteSize) / (MemoryLayout<Float>.size * channels))
         guard availableFrames > 0 else { continue }
 
-        // Equalizer, unless this stream is flat.
-        if context.equalizerBypass[slot * Int(context.streamCount) + stream] == 0 {
+        // Equalizer, unless this stream is flat or on its way to silence.
+        if context.targetGains[stream] != 0,
+           context.equalizerBypass[slot * Int(context.streamCount) + stream] == 0 {
             for channel in 0..<min(channels, channelsPerStream) {
                 let stateBase = (stream * channelsPerStream + channel) * bandCount
                 for band in 0..<bandCount {
@@ -223,10 +231,17 @@ final class RenderGraph: @unchecked Sendable {
     }
 
     /// Publishes new settings for one stream. Control thread only.
-    func update(streamIndex: Int, gain: Double, equalizer: EqualizerSettings) {
+    ///
+    /// `ramped` is false only before the IOProc starts, where there is no previous gain
+    /// to glide from and starting at the wrong one would leak a buffer of audio from an
+    /// app the user just muted.
+    func update(streamIndex: Int, gain: Double, equalizer: EqualizerSettings, ramped: Bool = true) {
         guard streamIndex >= 0, streamIndex < streamKeys.count else { return }
 
         targetGains[streamIndex] = Float(max(0, gain))
+        if !ramped {
+            currentGains[streamIndex] = Float(max(0, gain))
+        }
 
         let streamCount = max(streamKeys.count, 1)
         let writeSlot = Int(1 - slot.pointee.load(ordering: .acquiring))

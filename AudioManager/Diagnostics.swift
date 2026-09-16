@@ -35,6 +35,11 @@ enum Diagnostics {
 
         print("permission: \(model.permission.rawValue)")
         print("focus: \(model.focus.isActive ? "on" : "off"), profile: \(model.activeProfile?.name ?? "none")")
+        let rules = model.activeScheduleRuleNames
+        print("schedule: \(model.scheduleRules.count) rule(s), active now: \(rules.isEmpty ? "none" : rules.joined(separator: ", "))")
+        if !model.scheduleMutedApps.isEmpty {
+            print("muted by schedule: \(model.scheduleMutedApps.map(\.rawValue).sorted().joined(separator: ", "))")
+        }
         print("apps: \(model.apps.count)")
 
         for app in model.apps {
@@ -52,7 +57,7 @@ enum Diagnostics {
                       key: \(app.key.rawValue)
                       processes: \(app.processes.count) \(app.audioObjectIDs)
                       mode: \(settings.mode.rawValue) volume: \(String(format: "%.2f", settings.volume)) gain: \(String(format: "%.3f", state.gain))
-                      flags: \(flags)
+                      flags: \(flags) decided by: \(state.reason.rawValue)
                   """)
         }
     }

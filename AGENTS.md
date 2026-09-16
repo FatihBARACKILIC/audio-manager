@@ -27,7 +27,7 @@ through our own DSP graph into an aggregate device.
 | Minimum OS | macOS 15.0 |
 | Language | Swift 6, strict concurrency = `complete` |
 | App type | `LSUIElement` — menu bar panel + Settings window, no Dock icon |
-| Per-app default mode | **Mute-only** (tap mutes, no re-render, zero added latency) |
+| Per-app default mode | **Mute-only** (app is silenced, its audio is never processed) |
 | Per-app opt-in mode | **Full control** (volume / gain / EQ via re-render), explained in the UI |
 | App list | All running apps; apps currently producing audio sorted first |
 | Process grouping | Group by bundle ID; Chrome/Electron/VS Code helper processes are hidden behind their parent app row |
@@ -144,7 +144,13 @@ real-time thread:
 - If a tap cannot be created (DRM-protected content, permission denied, process
   vanished), **degrade to mute-only** for that app and surface a clear UI state.
   Never leave an app silently broken.
-- Mute-only mode must not add latency: tap with mute behavior, no re-render path.
+- A process tap silences its process only while something is actually **reading** the
+  tap. A tap created with `CATapMuted` and then left alone changes nothing — measured
+  on macOS 15, with the tap correctly registered (`muteBehavior` reads back as 1) and
+  audio still audible. Muting therefore means *render this app as silence*: its tap
+  joins the shared aggregate device like any other and its stream is dropped before a
+  single sample is touched. Use `.mutedWhenTapped` for every tap, so that if our IOProc
+  ever stops the user's audio returns by itself.
 - The hearing-safety limiter is the **last** stage of the chain and cannot be
   bypassed by amplification or EQ gain.
 
@@ -171,7 +177,7 @@ hard fail — exceeding it means the change is not done.
 | State | CPU (target / ceiling) | Memory footprint (target / ceiling) |
 |---|---|---|
 | Idle — panel closed, nothing controlled | **0.0% / 0.2%** | **22 MB / 30 MB** |
-| Apps muted (mute-only, no render path) | **0.0% / 0.2%** | **24 MB / 32 MB** |
+| Apps muted (mute-only, stream dropped) | **0.2% / 0.5%** | **24 MB / 32 MB** |
 | Full control — 4 apps, 10-band EQ active | **0.4% / 1.0%** | **32 MB / 45 MB** |
 | Panel open, meters animating | **1.0% / 2.0%** | **36 MB / 50 MB** |
 
@@ -228,13 +234,16 @@ Practical consequences of the memory ceiling:
 
 ### Zero-cost idle (the most important rule)
 
-When no app needs full-control rendering, **nothing must be running**:
-no aggregate device, no IOProc, no tap on the render path, no timers, no observers
-doing work, no background `Task` loops. The engine is created lazily when the first
-app enters full-control mode and **torn down completely** when the last one leaves.
+When the user is controlling nothing at all, **nothing must be running**:
+no aggregate device, no IOProc, no tap, no timers, no observers doing work, no
+background `Task` loops. The engine is created lazily when the first app is muted or
+put into full control, and **torn down completely** when the last one leaves.
 
-Mute-only apps cost nothing at render time — the tap mutes the source and we never
-pull or process its audio.
+Muting is not free, and cannot be: the tap has to be read for the mute to hold, so one
+IOProc runs while anything is muted (~94 wake-ups a second at 512 frames / 48 kHz).
+What muting does avoid is all of the work: a silenced stream is skipped in the render
+callback before any filtering, mixing or metering, which is why the muted state costs
+about a fifth of a percent rather than the same as full control.
 
 ### Audio path
 
@@ -285,13 +294,14 @@ pull or process its audio.
 - No background work while the user is away: respect system sleep/wake, and tear
   the engine down rather than keeping it warm.
 
-### Measured baseline (Release, Apple Silicon, recorded 2026-09-15)
+### Measured baseline (Release, Apple Silicon, recorded 2026-09-16)
 
 The numbers the app actually hits today, for comparison when something regresses:
 
 | State | CPU | Memory (phys footprint) |
 |---|---|---|
 | Idle, panel closed, nothing controlled | 0.0% over 30 s | 13 MB |
+| 4 apps muted, panel closed | 0.17% over 60 s | 15 MB |
 | 3 apps in full control, EQ on, meters running | ~1.0% over 30 s | 16 MB |
 
 Profiling the rendering case shows the render callback taking about 0.5% of the audio
@@ -393,6 +403,8 @@ The app accepts a few command line flags, and they are part of the contract:
 - `--dump-state` prints the grouped app list and the effective decision per app.
 - `--simulate-control` (with `--dump-state`) routes every app through the processing
   path for one run, to prove the capture path end to end on a real machine.
+- `--simulate-mute` (with `--dump-state`) mutes every app for one run, to check the
+  silencing path on a machine where muting is misbehaving.
 - `--watch <seconds>` keeps the engine running before reporting, and reports peak levels.
 - `--reset-settings` clears stored settings and writes defaults back.
 - `--show-panel` opens the panel at launch.

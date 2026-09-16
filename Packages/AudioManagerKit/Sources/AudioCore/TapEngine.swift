@@ -6,12 +6,16 @@ import Synchronization
 
 /// Drives Core Audio process taps: the real implementation of `AudioEngineControlling`.
 ///
-/// Two paths, deliberately very different in cost:
+/// Every app the user is controlling — muted or processed — is tapped, and all of those
+/// taps feed one shared aggregate device and one IOProc. That is not an optimisation
+/// but a requirement: a process tap silences its process only while something is
+/// actually reading the tap, so a tap created and left alone changes nothing. Muting is
+/// therefore "render this app as silence", and it costs one IOProc, not zero.
 ///
-/// - **Mute only** — a tap whose mute behaviour silences the app at the source. No
-///   aggregate device, no IOProc, no audio flows through us at all.
-/// - **Full control** — the app's audio is captured, processed and played back through
-///   a single aggregate device shared by every app in this mode.
+/// The difference between the two modes is what happens to the captured audio:
+///
+/// - **Mute only** — the stream is dropped before a single sample is touched.
+/// - **Full control** — the stream runs through gain and the equalizer on the way out.
 ///
 /// When no app needs either, the engine holds no Core Audio objects whatsoever. That
 /// resting state is the point: an idle Audio Manager costs nothing.
@@ -32,9 +36,7 @@ public final class TapEngine: AudioEngineControlling, @unchecked Sendable {
 
     private let queue = DispatchQueue(label: "com.barackilic.AudioManager.tap-engine", qos: .userInitiated)
 
-    /// Taps that only silence an app.
-    private var muteTaps: [AppKey: TapHandle] = [:]
-    /// Taps feeding the render graph.
+    /// Taps feeding the shared render graph, one per controlled app.
     private var renderTaps: [AppKey: TapHandle] = [:]
     private var graph: RenderGraph?
     private var aggregateDeviceID = AudioObjectID(kAudioObjectUnknown)
@@ -140,40 +142,13 @@ public final class TapEngine: AudioEngineControlling, @unchecked Sendable {
         lastAppliedStates = Dictionary(uniqueKeysWithValues: states.map { ($0.key, $0) })
 
         let processIDs = Dictionary(uniqueKeysWithValues: apps.map { ($0.key, $0.audioObjectIDs) })
-        let muteKeys = Set(states.filter { $0.needsMuteOnlyTap }.map(\.key))
-        let renderStates = states.filter(\.needsRendering)
-        let renderKeys = renderStates.map(\.key)
+        // Muted and processed apps share one path: both need their tap to be read for
+        // the source to stay silent.
+        let controlled = states.filter { !$0.isPassthrough }
 
-        try syncMuteTaps(keys: muteKeys, processIDs: processIDs)
-        try syncRenderGraph(states: renderStates, keys: renderKeys, processIDs: processIDs)
+        try syncRenderGraph(states: controlled, keys: controlled.map(\.key), processIDs: processIDs)
 
-        if muteTaps.isEmpty, graph == nil {
-            statusContinuation.yield(.idle)
-        } else {
-            statusContinuation.yield(.running)
-        }
-    }
-
-    private func syncMuteTaps(keys: Set<AppKey>, processIDs: [AppKey: [UInt32]]) throws {
-        // Release taps for apps that no longer need muting, or whose processes changed.
-        for (key, handle) in muteTaps {
-            let current = processIDs[key] ?? []
-            if !keys.contains(key) || current != handle.processObjectIDs {
-                destroyTap(handle)
-                muteTaps.removeValue(forKey: key)
-            }
-        }
-
-        for key in keys where muteTaps[key] == nil {
-            guard let objectIDs = processIDs[key], !objectIDs.isEmpty else { continue }
-            do {
-                muteTaps[key] = try createTap(processObjectIDs: objectIDs, name: "Mute \(key.rawValue)", muted: true)
-            } catch {
-                // One app refusing to be tapped (protected content, for instance) must
-                // not take the others down.
-                statusContinuation.yield(.degraded(.tapCreationFailed))
-            }
-        }
+        statusContinuation.yield(graph == nil ? .idle : .running)
     }
 
     private func syncRenderGraph(
@@ -193,25 +168,34 @@ public final class TapEngine: AudioEngineControlling, @unchecked Sendable {
 
         if currentKeys != keys || processesChanged {
             tearDownRenderGraph()
-            try buildRenderGraph(keys: keys, processIDs: processIDs)
+            try buildRenderGraph(states: states, keys: keys, processIDs: processIDs)
         }
 
         // Cheap path: the graph already covers these apps, so only push new numbers.
         guard let graph else { return }
         for state in states {
             guard let index = graph.streamKeys.firstIndex(of: state.key) else { continue }
-            graph.update(streamIndex: index, gain: state.gain, equalizer: state.equalizer)
+            // Muting is gain zero, ramped like any other change so it does not click.
+            graph.update(
+                streamIndex: index,
+                gain: state.isMuted ? 0 : state.gain,
+                equalizer: state.isMuted ? .flat : state.equalizer
+            )
         }
     }
 
-    private func buildRenderGraph(keys: [AppKey], processIDs: [AppKey: [UInt32]]) throws {
+    private func buildRenderGraph(
+        states: [EffectiveAppState],
+        keys: [AppKey],
+        processIDs: [AppKey: [UInt32]]
+    ) throws {
         var handles: [TapHandle] = []
         var usableKeys: [AppKey] = []
 
         for key in keys {
             guard let objectIDs = processIDs[key], !objectIDs.isEmpty else { continue }
             do {
-                let handle = try createTap(processObjectIDs: objectIDs, name: "Control \(key.rawValue)", muted: false)
+                let handle = try createTap(processObjectIDs: objectIDs, name: "Control \(key.rawValue)")
                 handles.append(handle)
                 usableKeys.append(key)
                 renderTaps[key] = handle
@@ -235,6 +219,17 @@ public final class TapEngine: AudioEngineControlling, @unchecked Sendable {
         do {
             aggregateDeviceID = try createAggregateDevice(outputUID: output.uid, taps: handles)
             let newGraph = RenderGraph(streamKeys: usableKeys, sampleRate: output.sampleRate)
+            // Set every stream before the first buffer is rendered, or a muted app is
+            // briefly audible while its gain ramps down from the default of one.
+            for state in states {
+                guard let index = usableKeys.firstIndex(of: state.key) else { continue }
+                newGraph.update(
+                    streamIndex: index,
+                    gain: state.isMuted ? 0 : state.gain,
+                    equalizer: state.isMuted ? .flat : state.equalizer,
+                    ramped: false
+                )
+            }
             try newGraph.start(aggregateDeviceID: aggregateDeviceID)
             graph = newGraph
             installDefaultDeviceListener()
@@ -249,20 +244,18 @@ public final class TapEngine: AudioEngineControlling, @unchecked Sendable {
 
     /// Creates a tap over every process of one app.
     ///
-    /// The mute behaviour is the whole difference between the two modes:
-    ///
-    /// - `.muted` silences the app for as long as the tap exists, which is exactly what
-    ///   "mute this app" means and needs nobody to read the tap.
-    /// - `.mutedWhenTapped` silences the app only while we are actually reading it. For
-    ///   full control that is the safety net we want: if our graph ever stops, the
-    ///   user's audio comes back by itself instead of going missing.
-    private func createTap(processObjectIDs: [UInt32], name: String, muted: Bool) throws -> TapHandle {
+    /// Always `.mutedWhenTapped`: the app is silenced exactly while our IOProc is
+    /// reading it, which is both what makes muting work at all and the safety net we
+    /// want — if the graph ever stops, the user's audio comes back by itself instead of
+    /// going missing. `.muted` sounds like the better fit for "mute this app", but a tap
+    /// nobody reads does not silence anything, so it would be a mute that never happens.
+    private func createTap(processObjectIDs: [UInt32], name: String) throws -> TapHandle {
         let description = CATapDescription(stereoMixdownOfProcesses: processObjectIDs)
         description.name = name
         description.uuid = UUID()
         // Private so the tap never shows up as a capture device for other apps.
         description.isPrivate = true
-        description.muteBehavior = muted ? .muted : .mutedWhenTapped
+        description.muteBehavior = .mutedWhenTapped
 
         var tapID = AudioObjectID(kAudioObjectUnknown)
         try CoreAudioError.check(
@@ -394,10 +387,6 @@ public final class TapEngine: AudioEngineControlling, @unchecked Sendable {
     private func tearDownEverything() {
         removeDefaultDeviceListener()
         tearDownRenderGraph()
-        for handle in muteTaps.values {
-            destroyTap(handle)
-        }
-        muteTaps.removeAll()
         statusContinuation.yield(.idle)
     }
 }

@@ -36,9 +36,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if CommandLine.arguments.contains("--simulate-control") {
                     model.simulateFullControlForDiagnostics()
                 }
+                if CommandLine.arguments.contains("--simulate-mute") {
+                    model.simulateMuteForDiagnostics()
+                }
                 if let seconds = Diagnostics.watchSeconds {
-                    // Metering only runs while the panel is visible, so pretend it is.
-                    model.isPanelVisible = true
+                    // Metering only runs while the panel is visible, so pretend it is —
+                    // but only where there is something to meter. Muted apps report
+                    // silence by definition, and leaving the meters on would make a
+                    // mute-only measurement look busier than the app really is.
+                    model.isPanelVisible = CommandLine.arguments.contains("--simulate-control")
                     try? await Task.sleep(for: .seconds(seconds))
                 }
                 Diagnostics.dump(model)

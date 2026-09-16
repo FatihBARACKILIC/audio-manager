@@ -21,7 +21,7 @@ struct AudioPolicyTests {
 
         #expect(state.isPassthrough)
         #expect(!state.needsRendering)
-        #expect(!state.needsMuteOnlyTap)
+        #expect(!state.needsSilencing)
     }
 
     @Test("Muting needs a tap but never the rendering path")
@@ -30,7 +30,7 @@ struct AudioPolicyTests {
         let state = policy.state(for: slack)
 
         #expect(state.isMuted)
-        #expect(state.needsMuteOnlyTap)
+        #expect(state.needsSilencing)
         #expect(!state.needsRendering)
     }
 
