@@ -137,6 +137,30 @@ public struct AudioPolicy: Sendable, Equatable {
         )
     }
 
+    /// The per-app settings in force right now, in the shape a profile stores them.
+    ///
+    /// This is what "save what I am hearing" means, and it is deliberately built from
+    /// `baseSettings` rather than from the manual overrides alone: those hold only the
+    /// layer on top of the active profile, so saving them would silently drop whatever
+    /// the profile itself decided.
+    ///
+    /// Schedule rules and focus mode are left out on purpose. They describe what is
+    /// happening at this moment, not what the user wants the profile to mean — a
+    /// profile saved at 10:00 on a weekday should not bake in the rule that happens to
+    /// be running.
+    ///
+    /// Apps sitting exactly at their defaults are omitted, which is what keeps
+    /// `unlistedApps` meaningful.
+    public func settingsSnapshot(for keys: some Sequence<AppKey>) -> [AppKey: AppAudioSettings] {
+        var snapshot: [AppKey: AppAudioSettings] = [:]
+        for key in keys {
+            let settings = baseSettings(for: key).settings
+            guard settings != defaults else { continue }
+            snapshot[key] = settings
+        }
+        return snapshot
+    }
+
     public func states(for apps: [AudioApp]) -> [AppKey: EffectiveAppState] {
         var result: [AppKey: EffectiveAppState] = [:]
         result.reserveCapacity(apps.count)

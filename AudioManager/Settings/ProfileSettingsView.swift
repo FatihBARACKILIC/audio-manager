@@ -64,56 +64,10 @@ struct ProfileSettingsView: View {
     @ViewBuilder
     private var detail: some View {
         if let profile = model.profiles.first(where: { $0.id == selection }) {
-            Form {
-                Section {
-                    LabeledContent {
-                        Text("\(profile.settings.count)")
-                    } label: {
-                        Text("Apps with explicit settings")
-                    }
-
-                    LabeledContent {
-                        Text(profile.unlistedApps == nil
-                            ? String(localized: "Left as they are")
-                            : String(localized: "Set to a shared fallback"))
-                    } label: {
-                        Text("Other apps")
-                    }
-
-                    if let focus = profile.focus, focus.isActive {
-                        LabeledContent {
-                            Text("\(focus.allowedApps.count)")
-                        } label: {
-                            Text("Apps allowed in focus mode")
-                        }
-                    }
-                } header: {
-                    Text(profile.name)
-                }
-
-                Section {
-                    Button {
-                        model.activateProfile(profile)
-                    } label: {
-                        Text("Activate this profile")
-                    }
-                    .disabled(profile.id == model.activeProfileID)
-
-                    Button(role: .destructive) {
-                        model.deleteProfile(profile)
-                        selection = nil
-                    } label: {
-                        Text("Delete profile")
-                    }
-                }
-
-                Section {
-                    Text("Activating a profile clears per-app overrides so the profile is exactly what you hear. Change anything afterwards and save it as a new profile to keep it.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+            ProfileEditor(model: model, profile: profile) {
+                selection = nil
             }
-            .formStyle(.grouped)
+            .id(profile.id)
         } else {
             VStack(spacing: 8) {
                 Image(systemName: "square.stack.3d.up")
@@ -143,5 +97,135 @@ struct ProfileSettingsView: View {
         guard let profile = model.profiles.first(where: { $0.id == selection }) else { return }
         model.deleteProfile(profile)
         selection = nil
+    }
+}
+
+/// One profile: what it does, and the two things you can do to it.
+///
+/// A profile is edited by activating it, changing apps in the panel and folding those
+/// changes back in — there is no separate editor for every setting, because the panel
+/// already is one and duplicating it would mean two places to get wrong.
+private struct ProfileEditor: View {
+    @Bindable var model: AppModel
+    let profile: AudioProfile
+    let onDelete: () -> Void
+
+    @State private var name: String = ""
+
+    private var isActive: Bool { profile.id == model.activeProfileID }
+
+    var body: some View {
+        Form {
+            Section {
+                TextField(text: $name) {
+                    Text("Name")
+                }
+                .onAppear { name = profile.name }
+                .onSubmit { model.renameProfile(profile, to: name) }
+
+                LabeledContent {
+                    (isActive ? Text("Active") : Text("Not active"))
+                        .foregroundStyle(isActive ? Color.accentColor : Color.secondary)
+                } label: {
+                    Text("Status")
+                }
+            } header: {
+                Text("Profile")
+            }
+
+            Section {
+                if profile.settings.isEmpty {
+                    Text("This profile changes nothing yet.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(entries, id: \.key) { entry in
+                        LabeledContent {
+                            Text(describe(entry.settings))
+                                .foregroundStyle(.secondary)
+                        } label: {
+                            Text(displayName(for: entry.key))
+                        }
+                    }
+                }
+
+                if let unlisted = profile.unlistedApps {
+                    LabeledContent {
+                        Text(describe(unlisted))
+                            .foregroundStyle(.secondary)
+                    } label: {
+                        Text("Every other app")
+                    }
+                }
+
+                if let focus = profile.focus, focus.isActive {
+                    LabeledContent {
+                        Text(verbatim: "\(focus.allowedApps.count)")
+                            .foregroundStyle(.secondary)
+                    } label: {
+                        Text("Apps allowed in focus mode")
+                    }
+                }
+            } header: {
+                Text("What it does")
+            }
+
+            Section {
+                Button {
+                    model.activateProfile(profile)
+                } label: {
+                    Text("Activate this profile")
+                }
+                .disabled(isActive)
+
+                Button {
+                    model.updateProfile(profile)
+                } label: {
+                    Text("Update from current setup")
+                }
+                .disabled(!isActive)
+
+                Button(role: .destructive) {
+                    model.deleteProfile(profile)
+                    onDelete()
+                } label: {
+                    Text("Delete profile")
+                }
+            } footer: {
+                Text(isActive
+                    ? "Change any app in the panel, then press Update to fold those changes into this profile."
+                    : "Activate this profile first to change what it contains.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    private var entries: [(key: AppKey, settings: AppAudioSettings)] {
+        profile.settings
+            .map { (key: $0.key, settings: $0.value) }
+            .sorted { displayName(for: $0.key).localizedCaseInsensitiveCompare(displayName(for: $1.key)) == .orderedAscending }
+    }
+
+    /// The app's real name when it is running, and its stored key when it is not — a
+    /// profile keeps settings for apps that are closed, and hiding them would make the
+    /// list look wrong.
+    private func displayName(for key: AppKey) -> String {
+        model.apps.first { $0.key == key }?.name ?? key.rawValue
+    }
+
+    private func describe(_ settings: AppAudioSettings) -> String {
+        if settings.isMuted {
+            return String(localized: "Muted")
+        }
+        var parts = [String(localized: "\(Int(settings.volume * 100))% volume")]
+        if settings.boostDecibels > 0 {
+            parts.append(String(localized: "+\(Int(settings.boostDecibels)) dB"))
+        }
+        if !settings.equalizer.isFlat {
+            parts.append(String(localized: "EQ on"))
+        }
+        return parts.joined(separator: ", ")
     }
 }

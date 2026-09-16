@@ -93,8 +93,14 @@ does nothing would be worse than a mode change.
 **Focus mode** silences everything except the apps you tick as allowed. Give it a
 keyboard shortcut in Settings and you can quiet the machine in one keystroke.
 
-**Profiles** capture the current setup under a name. Switch to "Work" and Slack and Mail
-mute themselves while your editor stays audible; switch to "Music" and it all comes back.
+**Profiles** capture the current setup under a name. Set your apps up the way you want
+them, then Settings → Profiles → type a name → **+**. Switch between profiles from the
+menu at the bottom of the panel: "Work" mutes Slack and Mail while your editor stays
+audible, "Music" brings it all back.
+
+To change a profile later, activate it, adjust whatever you like in the panel, then press
+**Update from current setup** in Settings → Profiles. There is no separate editor for
+every setting, because the panel already is one.
 
 **Schedules** apply a rule inside a time window — mute a set of apps, turn on focus mode,
 or activate a profile — on the weekdays you choose. Rules that cross midnight and days

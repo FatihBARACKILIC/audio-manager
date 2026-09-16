@@ -157,4 +157,63 @@ struct AudioPolicyTests {
         #expect(active.count == 2)
         #expect(!active.contains { $0.key == zoom })
     }
+
+    // MARK: - Saving a profile
+
+    @Test("Saving keeps what the active profile decided, not just the overrides on top")
+    func snapshotIncludesProfileSettings() {
+        let profile = AudioProfile(
+            name: "Work",
+            settings: [slack: AppAudioSettings(isMuted: true)]
+        )
+        // The user activated Work and then turned Spotify down.
+        let policy = AudioPolicy(
+            manual: [spotify: AppAudioSettings(volume: 0.3, mode: .fullControl)],
+            activeProfile: profile
+        )
+
+        let snapshot = policy.settingsSnapshot(for: [slack, spotify, zoom])
+
+        #expect(snapshot[slack]?.isMuted == true)
+        #expect(snapshot[spotify]?.volume == 0.3)
+        // Untouched apps stay out, so `unlistedApps` keeps meaning something.
+        #expect(snapshot[zoom] == nil)
+    }
+
+    @Test("An override wins over the profile it sits on")
+    func snapshotPrefersTheOverride() {
+        let profile = AudioProfile(name: "Work", settings: [slack: AppAudioSettings(isMuted: true)])
+        let policy = AudioPolicy(
+            manual: [slack: AppAudioSettings(volume: 0.5, mode: .fullControl)],
+            activeProfile: profile
+        )
+
+        let snapshot = policy.settingsSnapshot(for: [slack])
+
+        #expect(snapshot[slack]?.isMuted == false)
+        #expect(snapshot[slack]?.volume == 0.5)
+    }
+
+    @Test("A schedule rule running right now is not baked into the profile")
+    func snapshotIgnoresSchedule() {
+        let policy = AudioPolicy(
+            manual: [spotify: AppAudioSettings(volume: 0.4, mode: .fullControl)],
+            scheduleMutedApps: [spotify]
+        )
+
+        // What the user hears is muted, but that is the rule talking, not their intent.
+        #expect(policy.state(for: spotify).isMuted)
+        #expect(policy.settingsSnapshot(for: [spotify])[spotify]?.isMuted == false)
+    }
+
+    @Test("Focus mode is not baked into the profile either")
+    func snapshotIgnoresFocus() {
+        let policy = AudioPolicy(
+            manual: [spotify: AppAudioSettings(volume: 0.4, mode: .fullControl)],
+            focus: FocusMode(isActive: true, allowedApps: [zoom])
+        )
+
+        #expect(policy.state(for: spotify).isMuted)
+        #expect(policy.settingsSnapshot(for: [spotify])[spotify]?.isMuted == false)
+    }
 }

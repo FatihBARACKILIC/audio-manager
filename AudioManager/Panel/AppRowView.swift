@@ -70,10 +70,10 @@ struct AppRowView: View {
                     .controlSize(.mini)
                     .disabled(state.isMuted)
                     .accessibilityLabel(Text("Volume for \(app.name)"))
-                    .accessibilityHint(override.map(\.explanation) ?? Text(""))
+                    .accessibilityHint(override?.explanation ?? Text(verbatim: ""))
                     .accessibilityValue(Text("\(Int(settings.volume * 100)) percent"))
 
-                    Text("\(Int(settings.volume * 100))%")
+                    Text(verbatim: "\(Int(settings.volume * 100))%")
                         .font(.caption2.monospacedDigit())
                         .foregroundStyle(.secondary)
                         .frame(width: 34, alignment: .trailing)

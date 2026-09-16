@@ -279,7 +279,7 @@ private struct RuleEditor: View {
                 Text(String(format: "%02d", time.wrappedValue.hour))
                     .monospacedDigit()
             }
-            Text(":")
+            Text(verbatim: ":")
             Stepper(value: Binding(
                 get: { time.wrappedValue.minute },
                 set: { time.wrappedValue = TimeOfDay(hour: time.wrappedValue.hour, minute: $0) }

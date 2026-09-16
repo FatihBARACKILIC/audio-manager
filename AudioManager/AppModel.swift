@@ -250,10 +250,57 @@ final class AppModel {
         saveSoon()
     }
 
+    /// Every per-app setting in force right now, as a profile would store it.
+    ///
+    /// Deliberately not `appSettings`: that holds only the overrides layered on top of
+    /// the active profile, so saving it would quietly drop everything the profile
+    /// itself decided. What the user means by "save this" is what they can hear.
+    ///
+    /// Apps that are not running keep their entry, so switching profiles while Slack
+    /// happens to be closed does not forget what Slack should do.
+    private var currentSettingsSnapshot: [AppKey: AppAudioSettings] {
+        var keys = Set(appSettings.keys)
+        keys.formUnion(apps.map(\.key))
+        if let activeProfile {
+            keys.formUnion(activeProfile.settings.keys)
+        }
+        return policy.settingsSnapshot(for: keys)
+    }
+
     func saveCurrentAsProfile(named name: String) {
-        let profile = AudioProfile(name: name, settings: appSettings, focus: focus)
+        let profile = AudioProfile(
+            name: name,
+            settings: currentSettingsSnapshot,
+            focus: focus.isActive ? focus : nil
+        )
         profiles.append(profile)
         activeProfileID = profile.id
+        // The profile now carries these settings, so the overrides that produced them
+        // would only shadow it.
+        appSettings.removeAll()
+        saveSoon()
+    }
+
+    /// Replaces a profile's contents with what the user can hear right now.
+    ///
+    /// The only way to edit a saved profile: activate it, change what you want in the
+    /// panel, then fold those changes back in.
+    func updateProfile(_ profile: AudioProfile) {
+        guard let index = profiles.firstIndex(where: { $0.id == profile.id }) else { return }
+        profiles[index].settings = currentSettingsSnapshot
+        profiles[index].focus = focus.isActive ? focus : nil
+        if activeProfileID == profile.id {
+            appSettings.removeAll()
+        }
+        applySoon()
+        saveSoon()
+    }
+
+    func renameProfile(_ profile: AudioProfile, to name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let index = profiles.firstIndex(where: { $0.id == profile.id })
+        else { return }
+        profiles[index].name = trimmed
         saveSoon()
     }
 

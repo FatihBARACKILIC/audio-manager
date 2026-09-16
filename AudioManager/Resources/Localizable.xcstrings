@@ -78,6 +78,28 @@
         }
       }
     },
+    "%lld%% volume": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%%%lld ses"
+          }
+        }
+      }
+    },
+    "+%lld dB": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld dB"
+          }
+        }
+      }
+    },
     "A rule that starts and ends at the same time never runs.": {
       "extractionState": "manual",
       "localizations": {
@@ -122,13 +144,24 @@
         }
       }
     },
-    "Activating a profile clears per-app overrides so the profile is exactly what you hear. Change anything afterwards and save it as a new profile to keep it.": {
+    "Activate this profile first to change what it contains.": {
       "extractionState": "manual",
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bir profili etkinleştirmek uygulama bazlı geçersiz kılmaları temizler; böylece duyduğun şey tam olarak profilin kendisidir. Sonradan bir şey değiştirirsen, saklamak için yeni profil olarak kaydet."
+            "value": "İçeriğini değiştirmek için önce bu profili etkinleştir."
+          }
+        }
+      }
+    },
+    "Active": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etkin"
           }
         }
       }
@@ -210,17 +243,6 @@
         }
       }
     },
-    "Apps with explicit settings": {
-      "extractionState": "manual",
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ayarı belirtilmiş uygulamalar"
-          }
-        }
-      }
-    },
     "Audio Manager": {
       "extractionState": "manual",
       "localizations": {
@@ -283,6 +305,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ için güçlendirme"
+          }
+        }
+      }
+    },
+    "Change any app in the panel, then press Update to fold those changes into this profile.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Panelden istediğin uygulamayı değiştir, sonra Güncelle'ye basarak bu değişiklikleri profile işle."
           }
         }
       }
@@ -364,6 +397,17 @@
         }
       }
     },
+    "EQ on": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EQ açık"
+          }
+        }
+      }
+    },
     "Enabled": {
       "extractionState": "manual",
       "localizations": {
@@ -393,6 +437,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Her gün"
+          }
+        }
+      }
+    },
+    "Every other app": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diğer tüm uygulamalar"
           }
         }
       }
@@ -540,17 +595,6 @@
         }
       }
     },
-    "Left as they are": {
-      "extractionState": "manual",
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Oldukları gibi bırakılır"
-          }
-        }
-      }
-    },
     "Limit maximum volume": {
       "extractionState": "manual",
       "localizations": {
@@ -624,6 +668,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Yalnızca sessize al, bu uygulamayı kaynağında susturur. İşleme yok, ek gecikme yok."
+          }
+        }
+      }
+    },
+    "Muted": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Susturuldu"
           }
         }
       }
@@ -738,6 +793,17 @@
         }
       }
     },
+    "Not active": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Etkin değil"
+          }
+        }
+      }
+    },
     "Not requested yet": {
       "extractionState": "manual",
       "localizations": {
@@ -800,17 +866,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ayarları aç"
-          }
-        }
-      }
-    },
-    "Other apps": {
-      "extractionState": "manual",
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Diğer uygulamalar"
           }
         }
       }
@@ -969,17 +1024,6 @@
         }
       }
     },
-    "Set to a shared fallback": {
-      "extractionState": "manual",
-      "localizations": {
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ortak bir varsayılana ayarlanır"
-          }
-        }
-      }
-    },
     "Set up your apps the way you want them, then save that as a profile.": {
       "extractionState": "manual",
       "localizations": {
@@ -1024,6 +1068,17 @@
         }
       }
     },
+    "Status": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durum"
+          }
+        }
+      }
+    },
     "The output device changed. Audio is playing normally.": {
       "extractionState": "manual",
       "localizations": {
@@ -1064,6 +1119,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bu uygulamanın ses biçimi desteklenmiyor."
+          }
+        }
+      }
+    },
+    "This profile changes nothing yet.": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu profil henüz hiçbir şeyi değiştirmiyor."
           }
         }
       }
@@ -1123,6 +1189,17 @@
         }
       }
     },
+    "Update from current setup": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şu anki ayardan güncelle"
+          }
+        }
+      }
+    },
     "Volume for %@": {
       "extractionState": "manual",
       "localizations": {
@@ -1152,6 +1229,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ne"
+          }
+        }
+      }
+    },
+    "What it does": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ne yapıyor"
           }
         }
       }
